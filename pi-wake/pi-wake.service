@@ -1,0 +1,16 @@
+[Unit]
+Description=南溪唤醒词检测 (sherpa-onnx)
+After=network.target sound.target
+
+[Service]
+User=nanhara
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+WorkingDirectory=/home/nanhara/pi-talk
+ExecStart=/usr/bin/python3 /home/nanhara/pi-talk/pi-wake/wake.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

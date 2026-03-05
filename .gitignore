@@ -1,0 +1,10 @@
+node_modules/
+*.log
+.env
+/tmp/
+*.wav
+*.ogg
+*.jpg
+*.png
+venv/
+__pycache__/
