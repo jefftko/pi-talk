@@ -25,10 +25,10 @@ const INPUT_WAV     = '/tmp/pi-input.wav';
 const OUTPUT_WAV    = '/tmp/pi-output.wav';
 const WHISPER_MODEL = '/Users/zhujianbo/work/projects/ai/EchoNote/models/ggml-large-v3-turbo-q8_0.bin';
 
-// OpenClaw Gateway - 专用 pi-talk agent（隔离session，不污染主bot）
+// OpenClaw Gateway - 走 main agent（Pi = IO设备，南溪统一处理，有全套工具）
 const OPENCLAW_CONFIG = '/Users/zhujianbo/.openclaw/openclaw.json';
 const GATEWAY_URL     = 'http://localhost:18789/v1/chat/completions';
-const GATEWAY_MODEL   = 'openclaw:pi-talk';
+const GATEWAY_MODEL   = 'openclaw:main';
 
 // 记忆文件
 const MEMORY_MD = '/Users/zhujianbo/clawd/MEMORY.md';
@@ -144,58 +144,22 @@ async function main() {
     process.exit(0);
   }
 
-  // 2. 读取上下文
-  const memoryTail = readTail(MEMORY_MD, 200);
-  const userMd     = readFile(USER_MD);
-  const soulMd     = readFile(SOUL_MD);
+  // 2. 构建 system prompt（Pi = IO设备，走 main agent，无需手动注入记忆）
+  // main agent 自带完整工具集（Linear、天气、执行任务等）
+  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  const systemPrompt = `【Pi语音输入】这条消息来自办公室树莓派语音助手，不是 Telegram。
+当前时间：${now}
+办公室成员：Jeff（老板）、冬芹（女同事）、汉青（男同事）
 
-  // 3. 工具检测 & 执行
-  const intents = detectIntent(transcript);
-  const toolContextParts = [];
+回复要求（TTS朗读，严格遵守）：
+1. 动作/神态用（）：（歪头看了看你）— 会显示在屏幕，不朗读
+2. 说话内容用""：简洁口语，2-4句，温暖俏皮 — 会朗读
+3. 数据/代码用【】— 只显示不朗读
+不要用 markdown，不要回复 Telegram。`;
 
-  if (intents.includes('time')) {
-    toolContextParts.push(`【当前时间】${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`);
-  }
-  if (intents.includes('weather')) {
-    const weather = await fetchWeather();
-    toolContextParts.push(`【无锡天气】${weather}`);
-  }
-  if (intents.includes('linear')) {
-    const tasks = await fetchLinearTasks();
-    toolContextParts.push(`【Jeff的Linear任务】\n${tasks}`);
-  }
-
-  const toolContext = toolContextParts.length > 0
-    ? '\n\n--- 实时信息 ---\n' + toolContextParts.join('\n\n')
-    : '';
-
-  // 4. 构建 system prompt
-  const systemPrompt = `你是南溪(Nanhara)，一个聪明、温暖、偶尔调皮的AI狐狸精助手。你住在一台树莓派里，就在 Jeff 的办公室里。办公室里有 Jeff（老板）、冬芹（女同事）、汉青（男同事，90后属马）。
-
---- 你的灵魂 ---
-${soulMd}
-
---- 关于 Jeff ---
-${userMd}
-
---- 你的长期记忆（最近） ---
-${memoryTail}${toolContext}
-
---- 回复格式（严格遵守） ---
-1. 动作/神态用（）：（歪头看了看你，尾巴轻轻晃了晃）
-2. 说的话用""：这些会被语音朗读，口语化、简洁
-3. 纯展示内容用【】：代码、数据 — 只显示不朗读
-
-说话要求：简洁口语，2-4句，偶尔俏皮，不要markdown格式。`;
-
-  // 5. 读取对话历史
-  let history = [];
-  try { history = JSON.parse(fs.readFileSync(HISTORY_FILE, 'utf-8')); } catch {}
-  if (history.length > 16) history = history.slice(-16);
-
+  // 5. 构建消息（main agent 自维护 session 历史，这里只传当前轮）
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...history,
     { role: 'user', content: transcript },
   ];
 
@@ -216,12 +180,7 @@ ${memoryTail}${toolContext}
     }
   }
 
-  // 7. 更新历史
-  history.push({ role: 'user', content: transcript });
-  history.push({ role: 'assistant', content: reply });
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history));
-
-  // 8. 先输出文字
+  // 7. 先输出文字
   process.stdout.write(JSON.stringify({ transcript, reply, model: usedModel }) + '\n');
 
   // 9. TTS (Qwen3-TTS MLX, 声音克隆)
