@@ -1,58 +1,78 @@
 # Pi-Talk 🦊
 
-南溪语音交互系统 — 运行在办公室 Raspberry Pi 400 上。
+南溪（Nanhara）语音交互系统 — 运行在办公室 Raspberry Pi 400 上的 AI 语音助手。
 
 ## 架构
 
 ```
-Pi（录音/显示/播放）
-  → SSH → Mac mini pi-brain/pipeline.js
-    → Whisper STT（本地）
-    → OpenClaw Gateway → claude:pi-talk agent（Sonnet）
-    → Qwen3-TTS（声音克隆）
-  → Pi 播放音频 + 显示文字
+Pi（录音 / 显示 / 播放）
+  → SSH → Mac mini（pi-brain/pipeline.js）
+    → Whisper STT（本地离线）
+    → AI（OpenClaw Gateway → Claude Sonnet）
+    → Qwen3-TTS 声音克隆
+  ← Pi 播放音频 + 显示文字
 ```
 
 ## 文件结构
 
 ```
-server.js          Pi 端 HTTPS 服务器（v5 极简版）
+server.js            Pi 端 HTTPS 服务器
 public/
-  index.html       前端界面（南溪狐狸形象）
+  index.html         前端界面（南溪狐狸形象）
 pi-brain/
-  pipeline.js      Mac mini 全流程处理脚本
-  server.js        旧版辅助服务（已废弃）
-voices/            参考音频样本
-start.sh           Pi 启动脚本
+  pipeline.js        Mac mini 全流程处理脚本（Whisper → AI → TTS）
+pi-wake/             唤醒词检测（sherpa-onnx）
+voices/              参考音频样本（gitignored）
+start.sh             Pi 启动脚本
 ```
+
+## 环境变量
+
+复制 `.env.example` 为 `.env` 并填入：
+
+```bash
+DEEPSEEK_KEY=your-deepseek-key
+LINEAR_KEY=your-linear-api-key
+```
+
+`pi-brain/` 目录同样需要 `.env`，参考 `pi-brain/.env.example`（如有）。
 
 ## 部署
 
-### Pi 端
-```bash
-# 从 Mac mini 部署 server.js
-scp ~/work/projects/tools/pi-talk/server.js nanhara@192.168.6.187:~/pi-talk/server.js
+### 前置条件
 
-# 重启 Pi server（通过 OpenClaw RaspberryPi node）
-# invokeCommand: system.run
-# command: lsof -ti:3456 | xargs -r kill -9; sleep 1; cd ~/pi-talk && nohup node server.js > /tmp/pi-talk.log 2>&1 &
+- Raspberry Pi 400（或其他 ARM Pi），安装 Node.js 18+
+- Mac mini（或任意主机）运行 `pi-brain/pipeline.js`
+- Pi → Mac mini SSH 免密登录（`~/.ssh/config` 中配置 `Host ai-home`）
+- Mac mini 安装：`whisper-cli`、`ffmpeg`、Python 环境（含 mlx-audio）
+
+### Pi 端
+
+```bash
+# 克隆项目
+git clone https://github.com/jefftko/pi-talk.git ~/pi-talk
+cd ~/pi-talk
+
+npm install
+
+# 生成自签名证书（首次运行自动生成）
+node server.js
 ```
 
 ### Mac mini 端
+
 ```bash
-# pipeline.js 直接在本机运行，Pi 通过 SSH 调用
-# SSH key 已配置：Pi → Mac mini (ai-home)
+cd pi-brain
+npm install
+# pipeline.js 由 Pi 通过 SSH 远程调用，无需手动启动
 ```
-
-## 配置
-
-- Pi IP: `192.168.6.187`，端口 `3456`（HTTPS）
-- Mac mini pipeline: `~/work/projects/tools/pi-talk/pi-brain/pipeline.js`
-- OpenClaw agent: `openclaw:pi-talk`（gateway port 18789）
-- 语音克隆: 林志玲音色（`ref_audio_linzhiling.wav`）
 
 ## 待开发
 
-- [ ] `pi-wake/` — 唤醒词"南溪南溪"（sherpa-onnx）
-- [ ] `pi-face/` — 人脸识别（LBPH，Jeff/冬芹/汉青）
+- [ ] `pi-wake/` — 唤醒词检测（sherpa-onnx，关键词自定义）
+- [ ] `pi-face/` — 人脸识别（LBPH 模型）
 - [ ] systemd 服务（开机自启）
+
+## License
+
+MIT
