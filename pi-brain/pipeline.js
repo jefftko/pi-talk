@@ -30,6 +30,13 @@ const OPENCLAW_CONFIG = '/Users/zhujianbo/.openclaw/openclaw.json';
 const GATEWAY_URL     = 'http://localhost:18789/v1/chat/completions';
 const GATEWAY_MODEL   = 'openclaw:main';
 
+// 身份验证配置
+// 暗语：说话中包含此关键词 → Jeff 授权模式，可执行敏感任务
+// 未来：pi-face 人脸识别自动授权，替代暗语
+const AUTH_PASSPHRASE = process.env.AUTH_PASSPHRASE || '南溪执行';
+// 当前人脸识别状态（pi-face 完成后由 /api/face-detect 写入）
+const FACE_STATE_FILE = '/tmp/pi-face-state.json';
+
 // 记忆文件
 const MEMORY_MD = '/Users/zhujianbo/clawd/MEMORY.md';
 const USER_MD   = '/Users/zhujianbo/clawd/USER.md';
@@ -144,18 +151,48 @@ async function main() {
     process.exit(0);
   }
 
-  // 2. 构建 system prompt（Pi = IO设备，走 main agent，无需手动注入记忆）
-  // main agent 自带完整工具集（Linear、天气、执行任务等）
-  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
-  const systemPrompt = `【Pi语音输入】这条消息来自办公室树莓派语音助手，不是 Telegram。
-当前时间：${now}
-办公室成员：Jeff（老板）、冬芹（女同事）、汉青（男同事）
+  // 2. 身份验证：暗语 or 人脸识别
+  const passphraseFound = transcript.includes(AUTH_PASSPHRASE);
 
-回复要求（TTS朗读，严格遵守）：
-1. 动作/神态用（）：（歪头看了看你）— 会显示在屏幕，不朗读
-2. 说话内容用""：简洁口语，2-4句，温暖俏皮 — 会朗读
-3. 数据/代码用【】— 只显示不朗读
-不要用 markdown，不要回复 Telegram。`;
+  // 读取人脸识别状态（pi-face 写入，5秒内有效）
+  let faceIdentified = false;
+  let faceName = '';
+  try {
+    const faceState = JSON.parse(fs.readFileSync(FACE_STATE_FILE, 'utf-8'));
+    const age = Date.now() - (faceState.ts || 0);
+    if (age < 10000 && faceState.name === 'Jeff') {
+      faceIdentified = true;
+      faceName = 'Jeff';
+    }
+  } catch {}
+
+  const isJeff = passphraseFound || faceIdentified;
+  const authMethod = passphraseFound ? '暗语验证' : (faceIdentified ? `人脸识别(${faceName})` : '');
+
+  // 3. 构建 system prompt
+  const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+
+  const systemPrompt = isJeff
+    ? `【Pi语音输入 · Jeff已授权 · ${authMethod}】这条消息来自办公室树莓派，说话者是 Jeff（已验证身份）。
+当前时间：${now}
+Jeff 可以让你执行任何任务：查Linear任务、发消息、控制设备、执行命令等。
+授权暗语已使用，回复时无需重复确认身份。
+
+回复格式（TTS朗读）：
+1. 动作/神态用（）— 只显示不朗读
+2. 说话内容用""— 简洁口语2-4句，温暖俏皮，会朗读
+3. 数据/结果用【】— 只显示不朗读
+不要用 markdown，不要主动回复 Telegram。`
+    : `【Pi语音输入 · 未授权模式】这条消息来自办公室树莓派，说话者身份未确认（可能是访客或同事）。
+当前时间：${now}
+⚠️ 安全限制：只能聊天、回答常识问题、查天气/时间。不能执行任务、查看私人数据、发送消息、操作系统。
+如果对方要求执行敏感操作，礼貌拒绝并提示"需要 Jeff 授权"。
+
+回复格式（TTS朗读）：
+1. 动作/神态用（）— 只显示不朗读
+2. 说话内容用""— 简洁口语2-4句，温暖俏皮，会朗读
+3. 数据/结果用【】— 只显示不朗读
+不要用 markdown，不要主动回复 Telegram。`;
 
   // 5. 构建消息（main agent 自维护 session 历史，这里只传当前轮）
   const messages = [
