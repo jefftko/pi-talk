@@ -32,10 +32,28 @@ const GATEWAY_MODEL   = 'openclaw:main';
 
 // 身份验证配置
 // 主要：人脸识别（pi-face 写入 FACE_STATE_FILE）
-// 备用：隐藏暗语（应急，不对外公开）
-const AUTH_PASSPHRASE = process.env.AUTH_PASSPHRASE || '';  // 留空=禁用暗语
+// 备用：每日轮换暗语（每天 08:00 Telegram 发给 Jeff）
 const FACE_STATE_FILE = '/tmp/pi-face-state.json';
 const FACE_VALID_MS   = 30000;  // 人脸识别结果有效期 30 秒
+
+// 每日轮换暗语（与 daily_passphrase.py 算法一致）
+const PASSPHRASES = [
+  '今天效率不错','记得多喝水','事情很顺利','保持专注','今天天气好',
+  '准备开始了','思路很清晰','状态很好','慢慢来不急','全力以赴',
+  '今天收获多','按计划推进','目标很清晰','步骤很扎实','今天有进展',
+  '继续保持','思考一下','很有意思','今天不错','需要深入',
+  '逐步推进','注意细节','今天加油','想法很好','保持节奏',
+  '效果明显','今天顺手','方向正确','稳步前进','今天满意',
+];
+
+function getTodayPassphrase() {
+  const crypto = require('crypto');
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' }); // YYYY-MM-DD
+  const hash = crypto.createHash('sha256').update(today).digest('hex');
+  const idx = parseInt(hash, 16) % PASSPHRASES.length;
+  return PASSPHRASES[idx];
+}
+const AUTH_PASSPHRASE = getTodayPassphrase();
 
 // 记忆文件
 const MEMORY_MD = '/Users/zhujianbo/clawd/MEMORY.md';
