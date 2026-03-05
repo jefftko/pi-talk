@@ -141,6 +141,27 @@ app.get('/api/history', (req, res) => {
   } catch { res.json([]); }
 });
 
+// ── POST /api/face-detect (人脸识别结果上报) ──────────────────────────────────
+// pi-face 服务每 N 秒识别一次，POST 结果到这里
+// pipeline.js 在 Mac mini 读取 /tmp/pi-face-state.json（通过 SCP 同步）
+const FACE_STATE_FILE = '/tmp/pi-face-state.json';
+
+app.post('/api/face-detect', (req, res) => {
+  const { name, confidence, unknown } = req.body || {};
+
+  const state = { name: name || 'unknown', confidence: confidence || 0, ts: Date.now(), unknown: !!unknown };
+  try { fs.writeFileSync(FACE_STATE_FILE, JSON.stringify(state)); } catch {}
+
+  // 广播到前端显示
+  if (name && name !== 'unknown' && !unknown) {
+    broadcast({ type: 'face', name, confidence });
+  } else {
+    broadcast({ type: 'face', name: null });
+  }
+
+  res.json({ ok: true });
+});
+
 // ── POST /api/trigger-record (唤醒词触发录音) ─────────────────────────────────
 app.post('/api/trigger-record', (req, res) => {
   if (processing) return res.status(429).json({ ok: false, error: 'Busy' });

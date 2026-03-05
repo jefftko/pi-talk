@@ -31,11 +31,11 @@ const GATEWAY_URL     = 'http://localhost:18789/v1/chat/completions';
 const GATEWAY_MODEL   = 'openclaw:main';
 
 // 身份验证配置
-// 暗语：说话中包含此关键词 → Jeff 授权模式，可执行敏感任务
-// 未来：pi-face 人脸识别自动授权，替代暗语
-const AUTH_PASSPHRASE = process.env.AUTH_PASSPHRASE || '南溪执行';
-// 当前人脸识别状态（pi-face 完成后由 /api/face-detect 写入）
+// 主要：人脸识别（pi-face 写入 FACE_STATE_FILE）
+// 备用：隐藏暗语（应急，不对外公开）
+const AUTH_PASSPHRASE = process.env.AUTH_PASSPHRASE || '';  // 留空=禁用暗语
 const FACE_STATE_FILE = '/tmp/pi-face-state.json';
+const FACE_VALID_MS   = 30000;  // 人脸识别结果有效期 30 秒
 
 // 记忆文件
 const MEMORY_MD = '/Users/zhujianbo/clawd/MEMORY.md';
@@ -151,23 +151,26 @@ async function main() {
     process.exit(0);
   }
 
-  // 2. 身份验证：暗语 or 人脸识别
-  const passphraseFound = transcript.includes(AUTH_PASSPHRASE);
+  // 2. 从 Pi 拉取最新人脸识别状态（Pi 上 /tmp/pi-face-state.json）
+  try {
+    spawnSync('scp', ['-o', 'ConnectTimeout=3', `nanhara@${process.env.PI_IP || '192.168.6.187'}:/tmp/pi-face-state.json`, FACE_STATE_FILE], { timeout: 5000 });
+  } catch {}
 
-  // 读取人脸识别状态（pi-face 写入，5秒内有效）
+  // 身份验证：人脸识别（主）+ 隐藏暗语（应急备用）
   let faceIdentified = false;
   let faceName = '';
   try {
     const faceState = JSON.parse(fs.readFileSync(FACE_STATE_FILE, 'utf-8'));
     const age = Date.now() - (faceState.ts || 0);
-    if (age < 10000 && faceState.name === 'Jeff') {
+    if (age < FACE_VALID_MS && faceState.name === 'Jeff' && (faceState.confidence || 0) > 60) {
       faceIdentified = true;
-      faceName = 'Jeff';
+      faceName = faceState.name;
     }
   } catch {}
 
-  const isJeff = passphraseFound || faceIdentified;
-  const authMethod = passphraseFound ? '暗语验证' : (faceIdentified ? `人脸识别(${faceName})` : '');
+  const passphraseFound = AUTH_PASSPHRASE && transcript.includes(AUTH_PASSPHRASE);
+  const isJeff = faceIdentified || passphraseFound;
+  const authMethod = faceIdentified ? `人脸识别` : (passphraseFound ? '已授权' : '');
 
   // 3. 构建 system prompt
   const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
