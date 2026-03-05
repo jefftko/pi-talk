@@ -8,3 +8,6 @@ node_modules/
 *.png
 venv/
 __pycache__/
+pi-face/model.yml
+pi-face/haarcascade_frontalface_default.xml
+certs/

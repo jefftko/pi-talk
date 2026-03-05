@@ -16,12 +16,14 @@ Pi（录音 / 显示 / 播放）
 ## 文件结构
 
 ```
-server.js            Pi 端 HTTPS 服务器
+server.js            Pi 端 HTTPS 服务器（含 WebSocket 广播 + face-detect API）
 public/
   index.html         前端界面（南溪狐狸形象）
 pi-brain/
   pipeline.js        Mac mini 全流程处理脚本（Whisper → AI → TTS）
 pi-wake/             唤醒词检测（sherpa-onnx）
+pi-face/             人脸识别（OpenCV LBPH）
+pi-talk.service      systemd 服务文件
 voices/              参考音频样本（gitignored）
 start.sh             Pi 启动脚本
 ```
@@ -67,11 +69,17 @@ npm install
 # pipeline.js 由 Pi 通过 SSH 远程调用，无需手动启动
 ```
 
-## 待开发
+## 模块状态
 
-- [ ] `pi-wake/` — 唤醒词检测（sherpa-onnx，关键词自定义）
-- [ ] `pi-face/` — 人脸识别（LBPH 模型）
-- [ ] systemd 服务（开机自启）
+- [x] `pi-wake/` — 唤醒词检测（sherpa-onnx，关键词"南溪南溪"，代码+依赖已部署）
+- [x] `pi-face/` — 人脸识别框架（OpenCV LBPH，代码已写，待采集样本训练）
+- [x] systemd 服务（pi-talk.service 已启用运行，pi-wake.service 等模型下载完启用）
+
+### 待完成
+
+- [ ] sherpa-onnx KWS 模型下载（Pi 后台下载中，约 45MB）
+- [ ] pi-face 人脸样本采集 + 训练（需人在场）
+- [ ] pi-wake 首次实际唤醒测试（需麦克风+模型就绪）
 
 ## License
 

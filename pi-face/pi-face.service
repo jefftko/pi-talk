@@ -1,0 +1,15 @@
+[Unit]
+Description=南溪Pi-Face人脸识别
+After=network.target pi-talk.service
+Wants=pi-talk.service
+
+[Service]
+User=nanhara
+WorkingDirectory=/home/nanhara/pi-talk/pi-face
+ExecStart=/usr/bin/python3 /home/nanhara/pi-talk/pi-face/face_recognition_service.py
+Restart=always
+RestartSec=10
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+[Install]
+WantedBy=multi-user.target

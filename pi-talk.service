@@ -1,0 +1,14 @@
+[Unit]
+Description=南溪Pi-Talk语音服务
+After=network.target sound.target
+
+[Service]
+User=nanhara
+WorkingDirectory=/home/nanhara/pi-talk
+ExecStart=/home/nanhara/.nvm/versions/node/v22.22.0/bin/node /home/nanhara/pi-talk/server.js
+Restart=always
+RestartSec=5
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+
+[Install]
+WantedBy=multi-user.target

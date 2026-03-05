@@ -49,6 +49,16 @@ function broadcast(obj) {
   clients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.send(msg); });
 }
 
+// ── POST /api/face-detect ─────────────────────────────────────────────────────
+app.post('/api/face-detect', (req, res) => {
+  const { name, confidence } = req.body;
+  if (name) {
+    broadcast({ type: 'face', name, confidence: confidence || 0 });
+    console.log(`👤 人脸识别: ${name} (${confidence || 0}%)`);
+  }
+  res.json({ ok: true });
+});
+
 // ── 互斥锁 ───────────────────────────────────────────────────────────────────
 let processing = false;
 
