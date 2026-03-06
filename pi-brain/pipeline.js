@@ -258,7 +258,28 @@ Jeff 可以让你执行任何任务。但涉及以下【敏感操作】必须二
   // 7. 先输出文字
   process.stdout.write(JSON.stringify({ transcript, reply, model: usedModel }) + '\n');
 
-  // 9. TTS (Qwen3-TTS MLX, 声音克隆)
+  // 9. Quick Reply 预录音频检查（≤8字 且命中关键词 → 直接播，跳过 TTS）
+  const QUICK_REPLIES_DIR = path.join(__dirname, '../assets/quick-replies');
+  const QUICK_REPLY_MAP = [
+    { file: 'r_ok.wav',   patterns: ['好的', '好', '嗯', '行'] },
+    { file: 'r_got.wav',  patterns: ['明白', '懂了', '了解'] },
+    { file: 'r_recv.wav', patterns: ['收到', '知道了'] },
+    { file: 'r_wait.wav', patterns: ['稍等', '等一下', '等等'] },
+    { file: 'r_done.wav', patterns: ['搞定', '完成', '好了'] },
+  ];
+
+  function checkQuickReply(text) {
+    if (!text || text.length > 8) return null;
+    for (const { file, patterns } of QUICK_REPLY_MAP) {
+      if (patterns.some(p => text.includes(p))) {
+        const filePath = path.join(QUICK_REPLIES_DIR, file);
+        if (fs.existsSync(filePath)) return filePath;
+      }
+    }
+    return null;
+  }
+
+  // TTS (Qwen3-TTS MLX, 声音克隆)
   const spokenParts = [];
   const qr = /["""]([^"""]+)["""]/g; let m;
   while ((m = qr.exec(reply)) !== null) spokenParts.push(m[1]);
@@ -266,6 +287,13 @@ Jeff 可以让你执行任何任务。但涉及以下【敏感操作】必须二
     ? spokenParts.join('，')
     : reply.replace(/（[^）]*）/g, '').replace(/【[^】]*】/g, ''))
     .replace(/["""]/g, '').replace(/\n/g, ' ').trim().substring(0, 400);
+
+  // 命中 quick reply → 直接用预录音频，跳过 TTS
+  const quickReplyFile = checkQuickReply(ttsText);
+  if (quickReplyFile) {
+    fs.copyFileSync(quickReplyFile, OUTPUT_WAV);
+    return;
+  }
 
   if (ttsText) {
     const prefix = '/tmp/pi-tts-out';
