@@ -1,0 +1,8 @@
+# Gemini Code Assist 配置
+# 文档: https://developers.google.com/gemini-code-assist/docs/customize-gemini-behavior-github
+
+code_review:
+  # 自动 review 所有 PR
+  auto_review: true
+  # review 语言（中文输出）
+  comment_language: zh-CN
