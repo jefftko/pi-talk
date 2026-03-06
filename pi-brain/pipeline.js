@@ -296,25 +296,44 @@ Jeff 可以让你执行任何任务。但涉及以下【敏感操作】必须二
   }
 
   if (ttsText) {
-    const prefix = '/tmp/pi-tts-out';
-    const pyCode = [
-      `from mlx_audio.tts.utils import load_model`,
-      `from mlx_audio.tts.generate import generate_audio`,
-      `model = load_model('mlx-community/Qwen3-TTS-12Hz-0.6B-Base-4bit')`,
-      `generate_audio(model=model, text=${JSON.stringify(ttsText)},`,
-      `  ref_audio='/Volumes/Jeff2TEXTEND1/video/nanhara/assets/voice/ref_audio_linzhiling.wav',`,
-      `  ref_text='这个附家是一个非常传统的可能大家看到以前那个叫哆啦咩看小贝比很多人都会讲说是女婆婆和婆婆相处非常自在思路也很清晰了我一位母亲',`,
-      `  file_prefix='${prefix}', lang='zh')`,
-    ].join('\n');
+    let ttsOk = false;
 
+    // 优先：TTS HTTP Server（持久化，模型已加载，速度快）
     try {
-      fs.writeFileSync('/tmp/pi-tts.py', pyCode);
-      execSync(`/Users/zhujianbo/miniforge3/envs/zimage/bin/python3 /tmp/pi-tts.py`, { timeout: 120000 });
-      if (fs.existsSync(prefix + '_000.wav')) {
-        fs.copyFileSync(prefix + '_000.wav', OUTPUT_WAV);
+      const ctrl = new AbortController();
+      const hTimeout = setTimeout(() => ctrl.abort(), 60000);
+      const res = await fetch('http://127.0.0.1:18790/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: ttsText, output: OUTPUT_WAV }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(hTimeout);
+      const json = await res.json();
+      if (json.ok) ttsOk = true;
+    } catch (_) { /* server 不在线，fallback */ }
+
+    // Fallback：直接 spawn Python（兼容无 server 情况）
+    if (!ttsOk) {
+      const prefix = '/tmp/pi-tts-out';
+      const pyCode = [
+        `from mlx_audio.tts.utils import load_model`,
+        `from mlx_audio.tts.generate import generate_audio`,
+        `model = load_model('mlx-community/Qwen3-TTS-12Hz-0.6B-Base-4bit')`,
+        `generate_audio(model=model, text=${JSON.stringify(ttsText)},`,
+        `  ref_audio='/Volumes/Jeff2TEXTEND1/video/nanhara/assets/voice/ref_audio_linzhiling.wav',`,
+        `  ref_text='这个附家是一个非常传统的可能大家看到以前那个叫哆啦咩看小贝比很多人都会讲说是女婆婆和婆婆相处非常自在思路也很清晰了我一位母亲',`,
+        `  file_prefix='${prefix}', lang='zh')`,
+      ].join('\n');
+      try {
+        fs.writeFileSync('/tmp/pi-tts.py', pyCode);
+        execSync(`/Users/zhujianbo/miniforge3/envs/zimage/bin/python3 /tmp/pi-tts.py`, { timeout: 120000 });
+        if (fs.existsSync(prefix + '_000.wav')) {
+          fs.copyFileSync(prefix + '_000.wav', OUTPUT_WAV);
+        }
+      } catch (e) {
+        process.stderr.write('TTS failed: ' + e.message + '\n');
       }
-    } catch (e) {
-      process.stderr.write('TTS failed: ' + e.message + '\n');
     }
   }
 }
