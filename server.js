@@ -198,6 +198,32 @@ app.post('/api/push-voice', upload.single('audio'), (req, res) => {
   res.json({ ok: true });
 });
 
+// ── GET /api/sys-stats ────────────────────────────────────────────────────────
+app.get('/api/sys-stats', (req, res) => {
+  try {
+    const fs2 = require('fs');
+    // CPU usage (compare two readings)
+    const stat1 = fs2.readFileSync('/proc/stat', 'utf8').split('\n')[0].split(/\s+/).slice(1).map(Number);
+    const idle1 = stat1[3], total1 = stat1.reduce((a,b)=>a+b,0);
+    setTimeout(() => {
+      try {
+        const stat2 = fs2.readFileSync('/proc/stat','utf8').split('\n')[0].split(/\s+/).slice(1).map(Number);
+        const idle2 = stat2[3], total2 = stat2.reduce((a,b)=>a+b,0);
+        const cpu = Math.round((1 - (idle2-idle1)/(total2-total1)) * 100);
+        // Memory
+        const memInfo = fs2.readFileSync('/proc/meminfo','utf8');
+        const memTotal = parseInt(memInfo.match(/MemTotal:\s+(\d+)/)[1]);
+        const memAvail = parseInt(memInfo.match(/MemAvailable:\s+(\d+)/)[1]);
+        const mem = Math.round((memTotal-memAvail)/memTotal*100);
+        // Temperature
+        let temp = 0;
+        try { temp = Math.round(parseInt(fs2.readFileSync('/sys/class/thermal/thermal_zone0/temp','utf8').trim())/1000); } catch(e){}
+        res.json({ cpu, mem, temp });
+      } catch(e) { res.json({ cpu: 0, mem: 0, temp: 0 }); }
+    }, 200);
+  } catch(e) { res.json({ cpu: 0, mem: 0, temp: 0 }); }
+});
+
 // ── 启动 ──────────────────────────────────────────────────────────────────────
 httpsServer.listen(PORT, '0.0.0.0', () => {
   console.log(`🦊 Pi-Talk v5 → https://0.0.0.0:${PORT}  (Mac mini 全处理)`);
