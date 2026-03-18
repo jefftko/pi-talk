@@ -179,13 +179,9 @@ html, body {
   filter: saturate(0.6) hue-rotate(90deg) brightness(1.1);
   box-shadow: 0 0 30px rgba(0,255,65,0.3);
 }
-#avatar-face {
+#avatar-circle img {
   width: 100%; height: 100%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 32px; font-weight: 300; letter-spacing: 0.1em;
-  color: var(--green);
-  text-shadow: 0 0 20px var(--green-glow), 0 0 40px rgba(0,255,65,0.3);
-  background: radial-gradient(circle at center, rgba(0,255,65,0.08), transparent 70%);
+  object-fit: cover;
 }
 /* scan light */
 #avatar-circle::after {
@@ -415,7 +411,7 @@ html, body {
         <path d="M60,180 A80,80 0 0,1 20,120" stroke="#00D2FF" stroke-width="1" stroke-opacity="0.4" fill="none"/>
       </svg>
       <div id="avatar-circle">
-        <div id="avatar-face">南溪</div>
+        <img src="/avatar.jpg" alt="南溪" onerror="this.style.display='none'">
       </div>
     </div>
     <div id="status-label">IDLE</div>
