@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>南溪 · SYSTEM ONLINE</title>
-<!-- HACKER COMMAND CENTER WIP (pushed for Jeff review) -->
+<!-- HACKER COMMAND CENTER v1.0 -->
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -404,6 +404,57 @@ html, body {
 }
 #record-bar.active #rec-dot { display: inline-block; }
 
+/* ── L3 ALERT PANEL ── */
+#alert-panel {
+  position: fixed;
+  top: 0; right: -360px;
+  width: 340px; height: 100%;
+  background: rgba(10,0,0,0.95);
+  border-left: 1.5px solid rgba(255,68,68,0.70);
+  box-shadow: -4px 0 48px rgba(255,68,68,0.35);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  transition: right 0.32s cubic-bezier(0.16,1,0.3,1);
+}
+#alert-panel.show { right: 0; }
+#alert-panel-title {
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  color: var(--red);
+  border-bottom: 1px solid rgba(255,68,68,0.3);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+#alert-list { flex: 1; overflow-y: auto; }
+.alert-item {
+  font-size: 12px;
+  line-height: 1.7;
+  color: rgba(255,180,180,0.85);
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,68,68,0.12);
+}
+.alert-item .al-lvl { color: var(--red); font-weight: 700; }
+#alert-close {
+  margin-top: 12px;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: rgba(255,68,68,0.5);
+  cursor: pointer;
+  text-align: center;
+}
+#alert-close:hover { color: var(--red); }
+
+/* L4 border pulse */
+body.l4-critical {
+  animation: l4-pulse 1s ease-in-out infinite;
+}
+@keyframes l4-pulse {
+  0%,100% { box-shadow: inset 0 0 0 3px rgba(255,68,68,0.80); }
+  50%      { box-shadow: inset 0 0 0 3px rgba(255,68,68,0.15); }
+}
+
 /* ── FOOTER ── */
 #footer {
   flex: 0 0 auto;
@@ -519,6 +570,13 @@ html, body {
     <div id="space-key">SPACE</div>
     <span id="rec-label">HOLD TO SPEAK</span>
     <div id="rec-dot"></div>
+  </div>
+
+  <!-- L3 ALERT PANEL -->
+  <div id="alert-panel">
+    <div id="alert-panel-title">!! SYSTEM ALERT</div>
+    <div id="alert-list"></div>
+    <div id="alert-close" onclick="closeAlert()">[DISMISS]</div>
   </div>
 
   <!-- FOOTER -->
@@ -809,6 +867,28 @@ async function fetchAgents() {
 fetchAgents();
 setInterval(fetchAgents, 30*1000);
 
+// ═══════════════ ALERT SYSTEM ═══════════════
+const alertPanel = document.getElementById('alert-panel');
+const alertList = document.getElementById('alert-list');
+let alertQueue = [];
+
+function showAlert(msg, level='L3') {
+  const ts = new Date().toLocaleTimeString('zh-CN', {hour12:false});
+  alertQueue.unshift({msg, level, ts});
+  if (alertQueue.length > 10) alertQueue.pop();
+  alertList.innerHTML = alertQueue.map(a =>
+    `<div class="alert-item"><span class="al-lvl">[${a.level}]</span> ${a.ts} ${a.msg}</div>`
+  ).join('');
+  alertPanel.classList.add('show');
+  if (level === 'L4') {
+    document.body.classList.add('l4-critical');
+  }
+}
+function closeAlert() {
+  alertPanel.classList.remove('show');
+  document.body.classList.remove('l4-critical');
+}
+
 // ═══════════════ WEBSOCKET (Pi server) ═══════════════
 function connectWS() {
   try {
@@ -816,7 +896,9 @@ function connectWS() {
     ws.onmessage = e => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.type === 'reply') {
+        if (msg.type === 'alert') {
+          showAlert(msg.message || msg.text || 'Unknown alert', msg.level || 'L3');
+        } else if (msg.type === 'reply') {
           setStatus('speaking');
           const bubble = document.createElement('div');
           bubble.className = 'bubble ai';
