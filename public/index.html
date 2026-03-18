@@ -158,6 +158,61 @@ html, body {
   justify-content: center;
 }
 
+/* ── OUTER FIELD (breathing glow) ── */
+#outer-field {
+  position: absolute;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,255,65,0.18) 0%, rgba(0,255,65,0.05) 40%, transparent 70%);
+  filter: blur(22px);
+  pointer-events: none;
+  animation: field-breathe 3s ease-in-out infinite;
+  z-index: -1;
+}
+@keyframes field-breathe {
+  0%,100% { transform: scale(0.88); opacity: 0.5; }
+  50%      { transform: scale(1.12); opacity: 1.0; }
+}
+
+/* ── STATUS RING ── */
+#status-ring {
+  position: absolute;
+  width: 148px; height: 148px;
+  border-radius: 50%;
+  border: 2px solid rgba(0,200,50,0.25);
+  pointer-events: none;
+  transition: border-color 0.4s;
+}
+#status-ring.listening {
+  border-color: var(--red);
+  animation: pulse-listen 0.8s ease-out infinite;
+}
+@keyframes pulse-listen {
+  0%  { box-shadow: 0 0 0 0   rgba(255,68,68,0.85); }
+  70% { box-shadow: 0 0 0 18px rgba(255,68,68,0);   }
+  100%{ box-shadow: 0 0 0 0   rgba(255,68,68,0);    }
+}
+#status-ring.speaking {
+  border-color: var(--cyan);
+  animation: none;
+}
+/* 3 expanding wave rings */
+.wave-ring {
+  position: absolute;
+  width: 148px; height: 148px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,210,255,0.65);
+  pointer-events: none;
+  opacity: 0;
+  animation: wave-expand 1.5s ease-out infinite;
+}
+.wave-ring:nth-child(2) { animation-delay: 0.5s; }
+.wave-ring:nth-child(3) { animation-delay: 1.0s; }
+@keyframes wave-expand {
+  from { transform: scale(1);   opacity: 0.75; }
+  to   { transform: scale(1.9); opacity: 0;    }
+}
+
 #hex-svg {
   position: absolute;
   top: 0; left: 0;
@@ -385,7 +440,13 @@ html, body {
 
   <!-- AVATAR -->
   <div id="avatar-zone">
+    <div id="outer-field"></div>
     <div id="hex-wrap">
+      <!-- status ring + wave rings (behind hex) -->
+      <div id="status-ring"></div>
+      <div class="wave-ring" id="wave1" style="display:none"></div>
+      <div class="wave-ring" id="wave2" style="display:none"></div>
+      <div class="wave-ring" id="wave3" style="display:none"></div>
       <svg id="hex-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
         <!-- outer hex -->
         <polygon points="100,8 183,54 183,146 100,192 17,146 17,54"
@@ -583,22 +644,41 @@ setInterval(fetchSysStats, 10*1000);
 const statusLabel = document.getElementById('status-label');
 const hexSvg = document.getElementById('hex-svg');
 
+const statusRing = document.getElementById('status-ring');
+const waves = [document.getElementById('wave1'), document.getElementById('wave2'), document.getElementById('wave3')];
+const outerField = document.getElementById('outer-field');
+
 function setStatus(s) {
   const labels = {idle:'IDLE', listening:'LISTENING', processing:'PROCESSING', speaking:'SPEAKING'};
   statusLabel.textContent = (labels[s] || s.toUpperCase());
   statusLabel.dataset.state = s;
-  // hex color
+
+  // hex speed + color
   const polys = hexSvg.querySelectorAll('polygon');
   if (s === 'listening') {
     polys[0].style.stroke = '#FF4444';
-    polys[0].style.animation = 'hex-rotate 2s linear infinite';
+    hexSvg.style.animationDuration = '2s';
+    // outer field cyan
+    outerField.style.background = 'radial-gradient(circle, rgba(255,68,68,0.22) 0%, rgba(255,68,68,0.06) 40%, transparent 70%)';
+    outerField.style.animationDuration = '1s';
   } else if (s === 'speaking') {
     polys[0].style.stroke = '#00D2FF';
-    polys[0].style.animation = 'hex-rotate 10s linear infinite';
+    hexSvg.style.animationDuration = '10s';
+    outerField.style.background = 'radial-gradient(circle, rgba(0,210,255,0.20) 0%, rgba(0,210,255,0.06) 40%, transparent 70%)';
+    outerField.style.animationDuration = '1.2s';
   } else {
     polys[0].style.stroke = '#00FF41';
-    polys[0].style.animation = 'hex-rotate 60s linear infinite';
+    hexSvg.style.animationDuration = '60s';
+    outerField.style.background = 'radial-gradient(circle, rgba(0,255,65,0.18) 0%, rgba(0,255,65,0.05) 40%, transparent 70%)';
+    outerField.style.animationDuration = '3s';
   }
+
+  // status ring class
+  statusRing.className = s === 'listening' ? 'listening' : (s === 'speaking' ? 'speaking' : '');
+
+  // wave rings — show only when speaking
+  const showWaves = (s === 'speaking');
+  waves.forEach(w => { w.style.display = showWaves ? 'block' : 'none'; });
 }
 setStatus('idle');
 
