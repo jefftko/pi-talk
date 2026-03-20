@@ -3,919 +3,1867 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>南溪 · SYSTEM ONLINE</title>
-<!-- HACKER COMMAND CENTER v1.0 -->
+<title>南溪 · 数字人</title>
 <style>
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+════════════════════════════════════════════════════ */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --green:       #00FF41;
-  --green-dim:   rgba(0,255,65,0.15);
-  --green-glow:  rgba(0,255,65,0.4);
-  --cyan:        #00D2FF;
-  --cyan-dim:    rgba(0,210,255,0.12);
-  --red:         #FF4444;
-  --amber:       #FFB020;
-  --bg:          #000000;
-  --bg2:         #050a05;
-  --text:        #00FF41;
-  --text-dim:    rgba(0,255,65,0.55);
-  --text-ghost:  rgba(0,255,65,0.28);
-  --font-mono:   'JetBrains Mono', 'Courier New', monospace;
+  --gold:   #e5c07b;
+  --gold2:  #d4a017;
+  --blue:   #61afef;
+  --red:    #e06c75;
+  --purple: #c678dd;
+  --bg:     #0a0e1a;
+  --bg2:    #111827;
+  --bg3:    #1a2035;
+  --text:   #e0e6f0;
+  --muted:  #5a6b8a;
 }
 
 html, body {
   width: 100%; height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-mono);
+  font-family: -apple-system, 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   overflow: hidden;
-}
-
-/* ── MATRIX RAIN ── */
-#matrix-canvas {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  opacity: 0.13;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── SCANLINE OVERLAY ── */
-.scanlines {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0,0,0,0.08) 2px,
-    rgba(0,0,0,0.08) 4px
-  );
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* ── CRT VIGNETTE ── */
-.crt-vignette {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.7) 100%);
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* ── GLITCH FLASH ── */
-.glitch-flash {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 3px;
-  background: var(--green);
-  opacity: 0;
-  pointer-events: none;
-  z-index: 10;
-  animation: glitch-scan 8s infinite;
-}
-@keyframes glitch-scan {
-  0%   { opacity: 0; top: 0; }
-  5%   { opacity: 0.6; }
-  10%  { opacity: 0; top: 100%; }
-  100% { opacity: 0; top: 100%; }
-}
-
-/* ── HUD CORNERS ── */
-.hud-corner {
-  position: fixed;
-  width: 24px; height: 24px;
-  border-color: var(--green);
-  border-style: solid;
-  opacity: 0.5;
-  z-index: 2;
-}
-.hud-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
-.hud-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
-.hud-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
-.hud-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
-
-/* ── LAYOUT ── */
-#app {
-  position: relative;
-  width: 100%; height: 100%;
-  display: flex;
-  flex-direction: column;
-  z-index: 3;
-  padding: 0 16px;
-}
-
-/* ── HEADER ── */
-#header {
-  flex: 0 0 auto;
-  padding: 14px 0 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(0,255,65,0.2);
-}
-#sys-label {
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  color: var(--text-dim);
-  text-transform: uppercase;
-}
-#sys-label span { color: var(--green); }
-#clock {
-  font-size: 40px;
-  font-weight: 200;
-  letter-spacing: 0.04em;
-  color: var(--green);
-  text-shadow: 0 0 20px var(--green-glow);
-  font-variant-numeric: tabular-nums;
-}
-#date-label {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  color: var(--text-dim);
-  text-align: right;
-}
-
-/* ── AVATAR ZONE ── */
-#avatar-zone {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 18px 0 12px;
-  position: relative;
-}
-
-/* hexagon SVG wrapper */
-#hex-wrap {
-  position: relative;
-  width: 200px;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ── OUTER FIELD (breathing glow) ── */
-#outer-field {
-  position: absolute;
-  width: 240px; height: 240px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0,255,65,0.18) 0%, rgba(0,255,65,0.05) 40%, transparent 70%);
-  filter: blur(22px);
-  pointer-events: none;
-  animation: field-breathe 3s ease-in-out infinite;
-  z-index: -1;
-}
-@keyframes field-breathe {
-  0%,100% { transform: scale(0.88); opacity: 0.5; }
-  50%      { transform: scale(1.12); opacity: 1.0; }
-}
-
-/* ── STATUS RING ── */
-#status-ring {
-  position: absolute;
-  width: 148px; height: 148px;
-  border-radius: 50%;
-  border: 2px solid rgba(0,200,50,0.25);
-  pointer-events: none;
-  transition: border-color 0.4s;
-}
-#status-ring.listening {
-  border-color: var(--red);
-  animation: pulse-listen 0.8s ease-out infinite;
-}
-@keyframes pulse-listen {
-  0%  { box-shadow: 0 0 0 0   rgba(255,68,68,0.85); }
-  70% { box-shadow: 0 0 0 18px rgba(255,68,68,0);   }
-  100%{ box-shadow: 0 0 0 0   rgba(255,68,68,0);    }
-}
-#status-ring.speaking {
-  border-color: var(--cyan);
-  animation: none;
-}
-/* 3 expanding wave rings */
-.wave-ring {
-  position: absolute;
-  width: 148px; height: 148px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(0,210,255,0.65);
-  pointer-events: none;
-  opacity: 0;
-  animation: wave-expand 1.5s ease-out infinite;
-}
-.wave-ring:nth-child(2) { animation-delay: 0.5s; }
-.wave-ring:nth-child(3) { animation-delay: 1.0s; }
-@keyframes wave-expand {
-  from { transform: scale(1);   opacity: 0.75; }
-  to   { transform: scale(1.9); opacity: 0;    }
-}
-
-#hex-svg {
-  position: absolute;
-  top: 0; left: 0;
-  width: 200px; height: 200px;
-  animation: hex-rotate 60s linear infinite;
-}
-@keyframes hex-rotate {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-#avatar-circle {
-  position: relative;
-  width: 130px;
-  height: 130px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-  filter: saturate(0.6) hue-rotate(90deg) brightness(1.1);
-  box-shadow: 0 0 30px rgba(0,255,65,0.3);
-}
-#avatar-circle img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-}
-/* scan light */
-#avatar-circle::after {
-  content: '';
-  position: absolute;
-  top: -100%; left: 0;
-  width: 100%; height: 40%;
-  background: linear-gradient(180deg, transparent, rgba(0,255,65,0.25), transparent);
-  animation: scan-down 2.2s ease-in-out infinite;
-}
-@keyframes scan-down {
-  0%   { top: -40%; }
-  100% { top: 120%; }
-}
-
-#status-label {
-  margin-top: 12px;
-  font-size: 13px;
-  letter-spacing: 0.2em;
-  color: var(--text-dim);
-  text-transform: uppercase;
-}
-#status-label::after {
-  content: '_';
-  animation: blink 1s step-end infinite;
-}
-@keyframes blink { 50% { opacity: 0; } }
-
-/* ── DATA PANELS ── */
-#data-panels {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  padding: 4px 0 8px;
-}
-
-.panel {
-  background: rgba(0,255,65,0.04);
-  border: 1px solid rgba(0,255,65,0.18);
-  border-radius: 4px;
-  padding: 8px 10px;
-}
-.panel-title {
-  font-size: 9px;
-  letter-spacing: 0.2em;
-  color: var(--text-ghost);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  border-bottom: 1px solid rgba(0,255,65,0.1);
-  padding-bottom: 4px;
-}
-.panel-row {
-  font-size: 11px;
-  color: var(--text-dim);
-  line-height: 1.7;
-  white-space: nowrap;
-}
-.panel-row .val {
-  color: var(--green);
-  font-weight: 600;
-}
-.panel-row .val.cyan { color: var(--cyan); }
-.panel-row .val.amber { color: var(--amber); }
-
-/* ASCII bar */
-.ascii-bar {
-  display: inline-block;
-  font-size: 10px;
-  letter-spacing: -0.05em;
-  color: var(--green-dim);
-}
-.ascii-bar .fill { color: var(--green); }
-
-/* ── DIALOGUE ── */
-#dialogue-zone {
-  flex: 1 1 auto;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 4px 0;
-  min-height: 0;
-}
-.bubble {
-  font-size: 13px;
-  line-height: 1.6;
-  padding: 6px 10px;
-  margin-bottom: 5px;
-  border-radius: 2px;
-  max-width: 92%;
-  animation: bubble-in 0.3s ease-out;
-}
-@keyframes bubble-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.bubble.ai {
-  background: rgba(0,255,65,0.06);
-  border-left: 2px solid var(--green);
-  color: var(--text);
-  align-self: flex-start;
-}
-.bubble.ai::before {
-  content: '> ';
-  color: var(--green);
-  font-weight: 700;
-}
-.bubble.user {
-  background: rgba(0,210,255,0.06);
-  border-right: 2px solid var(--cyan);
-  color: rgba(0,210,255,0.85);
-  align-self: flex-end;
-  text-align: right;
-}
-.bubble.user::before {
-  content: '$ ';
-  color: var(--cyan);
-  font-weight: 700;
-}
-
-/* ── RECORD BAR ── */
-#record-bar {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px 0 8px;
-  border-top: 1px solid rgba(0,255,65,0.12);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: var(--text-ghost);
-  text-transform: uppercase;
   user-select: none;
-  transition: color 0.15s;
+  -webkit-user-select: none;
 }
-#record-bar.active {
-  color: var(--red);
-}
-#space-key {
-  display: inline-flex;
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT
+════════════════════════════════════════════════════ */
+.layout {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  width: 60px; height: 22px;
-  border: 1.5px solid rgba(0,255,65,0.3);
-  border-radius: 4px;
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  color: var(--text-ghost);
-  background: rgba(0,255,65,0.04);
-  transition: all 0.15s;
+  position: relative;
 }
-#record-bar.active #space-key {
-  border-color: var(--red);
-  box-shadow: 0 0 12px rgba(255,68,68,0.5);
-  color: var(--red);
+
+/* Top bar */
+.topbar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 14px 20px 10px;
+  position: relative;
+  z-index: 10;
 }
-#rec-dot {
-  display: none;
+
+.topbar .brand {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 20px rgba(229,192,123,0.5);
+}
+
+.topbar .conn-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: var(--red);
-  animation: blink 0.8s step-end infinite;
+  background: var(--muted);
+  margin-left: 10px;
+  transition: background 0.5s;
 }
-#record-bar.active #rec-dot { display: inline-block; }
+.topbar .conn-dot.online { background: #98c379; box-shadow: 0 0 6px #98c379; }
+.topbar .conn-dot.error  { background: var(--red); }
 
-/* ── L3 ALERT PANEL ── */
-#alert-panel {
-  position: fixed;
-  top: 0; right: -360px;
-  width: 340px; height: 100%;
-  background: rgba(10,0,0,0.95);
-  border-left: 1.5px solid rgba(255,68,68,0.70);
-  box-shadow: -4px 0 48px rgba(255,68,68,0.35);
-  z-index: 100;
+.topbar .spacer { flex: 1; }
+
+.topbar .cam-toggle {
+  background: rgba(97,175,239,0.12);
+  border: 1px solid rgba(97,175,239,0.3);
+  color: var(--blue);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.topbar .cam-toggle:hover,
+.topbar .cam-toggle.active {
+  background: rgba(97,175,239,0.25);
+  border-color: var(--blue);
+}
+
+/* ═══════════════════════════════════════════════════
+   FOX CHARACTER STAGE
+════════════════════════════════════════════════════ */
+.fox-stage {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 24px 16px;
-  transition: right 0.32s cubic-bezier(0.16,1,0.3,1);
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  min-height: 0;
 }
-#alert-panel.show { right: 0; }
-#alert-panel-title {
+
+/* Ambient background glow */
+.ambient {
+  position: absolute;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(229,192,123,0.08) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: background 0.8s, transform 0.8s;
+}
+body.speaking .ambient {
+  background: radial-gradient(circle, rgba(229,192,123,0.18) 0%, transparent 70%);
+  animation: ambientPulse 1.5s ease-in-out infinite;
+}
+body.thinking .ambient {
+  background: radial-gradient(circle, rgba(97,175,239,0.15) 0%, transparent 70%);
+}
+body.listening .ambient {
+  background: radial-gradient(circle, rgba(224,108,117,0.15) 0%, transparent 70%);
+}
+@keyframes ambientPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50%       { transform: translate(-50%, -50%) scale(1.08); }
+}
+
+/* Orbit ring (thinking) */
+.orbit-ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 280px; height: 280px;
+  margin-left: -140px; margin-top: -140px;
+  border-radius: 50%;
+  border: 1px solid rgba(97,175,239,0.2);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+body.thinking .orbit-ring {
+  opacity: 1;
+  animation: orbitSpin 3s linear infinite;
+}
+@keyframes orbitSpin { 100% { transform: rotate(360deg); } }
+
+/* Orbit particles */
+.particles {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  pointer-events: none;
+}
+.particle {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 8px var(--blue);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+body.thinking .particle { opacity: 1; }
+
+/* Generate 8 particles at different orbit angles */
+.particle:nth-child(1)  { animation: orbit1 2.8s linear infinite; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.particle:nth-child(2)  { animation: orbit2 2.8s linear infinite 0.35s; }
+.particle:nth-child(3)  { animation: orbit3 2.8s linear infinite 0.7s; }
+.particle:nth-child(4)  { animation: orbit4 2.8s linear infinite 1.05s; }
+.particle:nth-child(5)  { animation: orbit5 2.8s linear infinite 1.4s; background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+.particle:nth-child(6)  { animation: orbit6 2.8s linear infinite 1.75s; }
+.particle:nth-child(7)  { animation: orbit7 2.8s linear infinite 2.1s; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.particle:nth-child(8)  { animation: orbit8 2.8s linear infinite 2.45s; }
+
+@keyframes orbit1 { 0%{transform:rotate(0deg)   translateX(130px) rotate(0deg)}   100%{transform:rotate(360deg)  translateX(130px) rotate(-360deg)} }
+@keyframes orbit2 { 0%{transform:rotate(45deg)  translateX(130px) rotate(-45deg)} 100%{transform:rotate(405deg) translateX(130px) rotate(-405deg)} }
+@keyframes orbit3 { 0%{transform:rotate(90deg)  translateX(130px) rotate(-90deg)} 100%{transform:rotate(450deg) translateX(130px) rotate(-450deg)} }
+@keyframes orbit4 { 0%{transform:rotate(135deg) translateX(130px) rotate(-135deg)}100%{transform:rotate(495deg) translateX(130px) rotate(-495deg)} }
+@keyframes orbit5 { 0%{transform:rotate(180deg) translateX(130px) rotate(-180deg)}100%{transform:rotate(540deg) translateX(130px) rotate(-540deg)} }
+@keyframes orbit6 { 0%{transform:rotate(225deg) translateX(130px) rotate(-225deg)}100%{transform:rotate(585deg) translateX(130px) rotate(-585deg)} }
+@keyframes orbit7 { 0%{transform:rotate(270deg) translateX(130px) rotate(-270deg)}100%{transform:rotate(630deg) translateX(130px) rotate(-630deg)} }
+@keyframes orbit8 { 0%{transform:rotate(315deg) translateX(130px) rotate(-315deg)}100%{transform:rotate(675deg) translateX(130px) rotate(-675deg)} }
+
+/* ── Fox SVG container ─────────────────────────────── */
+.fox-wrap {
+  position: relative;
+  width: 260px; height: 300px;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+#foxSvg {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 24px rgba(229,192,123,0.25));
+  transition: filter 0.6s;
+  animation: breathe 4s ease-in-out infinite;
+}
+
+body.speaking #foxSvg {
+  filter: drop-shadow(0 0 40px rgba(229,192,123,0.55));
+  animation: speakSway 0.4s ease-in-out infinite alternate;
+}
+body.thinking #foxSvg {
+  filter: drop-shadow(0 0 30px rgba(97,175,239,0.5));
+  animation: breathe 2s ease-in-out infinite;
+}
+body.listening #foxSvg {
+  filter: drop-shadow(0 0 32px rgba(224,108,117,0.5));
+  animation: listenBob 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%       { transform: scale(1.02) translateY(-4px); }
+}
+@keyframes speakSway {
+  from { transform: scale(1.02) translateY(-2px) rotate(-0.5deg); }
+  to   { transform: scale(1.04) translateY(-5px) rotate(0.5deg); }
+}
+@keyframes listenBob {
+  from { transform: scale(1) translateY(0); }
+  to   { transform: scale(1.01) translateY(-3px); }
+}
+
+/* Mouth animation group */
+#foxMouthSmile { transition: d 0.3s; }
+body.speaking #foxMouthOpen { display: block; }
+body.speaking #foxMouthSmile { display: none; }
+#foxMouthOpen { display: none; }
+
+/* Eye blink */
+#foxEyeL, #foxEyeR { animation: blink 6s ease-in-out infinite; }
+#foxEyeR { animation-delay: 0.1s; }
+@keyframes blink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  98%            { transform: scaleY(0.05); }
+}
+
+/* Tail wag */
+#foxTail {
+  transform-origin: 200px 420px;
+  animation: tailWag 3s ease-in-out infinite;
+}
+body.speaking #foxTail { animation: tailWagFast 0.8s ease-in-out infinite; }
+@keyframes tailWag     { 0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)} }
+@keyframes tailWagFast { 0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)} }
+
+/* ═══════════════════════════════════════════════════
+   TEXT DISPLAY
+════════════════════════════════════════════════════ */
+.speech-bubble {
+  max-width: 520px;
+  min-height: 54px;
+  padding: 14px 22px;
+  margin: 10px 20px 0;
+  background: rgba(26, 32, 53, 0.85);
+  border: 1px solid rgba(229,192,123,0.2);
+  border-radius: 16px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text);
+  text-align: center;
+  position: relative;
+  z-index: 3;
+  transition: opacity 0.4s, transform 0.4s;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.speech-bubble.empty {
+  opacity: 0.4;
   font-size: 14px;
-  letter-spacing: 0.18em;
-  color: var(--red);
-  border-bottom: 1px solid rgba(255,68,68,0.3);
-  padding-bottom: 10px;
-  margin-bottom: 12px;
+  color: var(--muted);
 }
-#alert-list { flex: 1; overflow-y: auto; }
-.alert-item {
-  font-size: 12px;
-  line-height: 1.7;
-  color: rgba(255,180,180,0.85);
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(255,68,68,0.12);
+.speech-bubble.typing::after {
+  content: '▋';
+  animation: cursor 0.8s step-end infinite;
 }
-.alert-item .al-lvl { color: var(--red); font-weight: 700; }
-#alert-close {
-  margin-top: 12px;
-  font-size: 11px;
-  letter-spacing: 0.15em;
-  color: rgba(255,68,68,0.5);
-  cursor: pointer;
+@keyframes cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.last-user {
+  max-width: 520px;
+  margin: 6px 20px 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══════════════════════════════════════════════════
+   WAVEFORM (recording visualizer)
+════════════════════════════════════════════════════ */
+.waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 42px;
+  margin: 8px 0 0;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+body.listening .waveform { opacity: 1; }
+
+.waveform .bar {
+  width: 4px;
+  border-radius: 3px;
+  background: var(--red);
+  height: 6px;
+  transition: height 0.05s;
+}
+/* CSS fallback animation when no AnalyserNode data */
+body.listening .waveform .bar:nth-child(odd)  { animation: waveFall 0.5s ease-in-out infinite alternate; }
+body.listening .waveform .bar:nth-child(even) { animation: waveFall 0.5s ease-in-out infinite alternate-reverse; }
+.waveform .bar:nth-child(1)  { animation-duration: 0.45s; animation-delay: 0.00s; }
+.waveform .bar:nth-child(2)  { animation-duration: 0.52s; animation-delay: 0.05s; }
+.waveform .bar:nth-child(3)  { animation-duration: 0.40s; animation-delay: 0.10s; }
+.waveform .bar:nth-child(4)  { animation-duration: 0.58s; animation-delay: 0.15s; }
+.waveform .bar:nth-child(5)  { animation-duration: 0.43s; animation-delay: 0.08s; }
+.waveform .bar:nth-child(6)  { animation-duration: 0.50s; animation-delay: 0.12s; }
+.waveform .bar:nth-child(7)  { animation-duration: 0.46s; animation-delay: 0.03s; }
+.waveform .bar:nth-child(8)  { animation-duration: 0.55s; animation-delay: 0.18s; }
+.waveform .bar:nth-child(9)  { animation-duration: 0.42s; animation-delay: 0.07s; }
+.waveform .bar:nth-child(10) { animation-duration: 0.48s; animation-delay: 0.14s; }
+.waveform .bar:nth-child(11) { animation-duration: 0.57s; animation-delay: 0.02s; }
+.waveform .bar:nth-child(12) { animation-duration: 0.44s; animation-delay: 0.09s; }
+.waveform .bar:nth-child(13) { animation-duration: 0.51s; animation-delay: 0.11s; }
+.waveform .bar:nth-child(14) { animation-duration: 0.47s; animation-delay: 0.16s; }
+.waveform .bar:nth-child(15) { animation-duration: 0.53s; animation-delay: 0.04s; }
+@keyframes waveFall {
+  from { height: 4px; }
+  to   { height: 30px; }
+}
+
+/* ═══════════════════════════════════════════════════
+   BOTTOM CONTROLS
+════════════════════════════════════════════════════ */
+.controls {
+  padding: 12px 20px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+}
+
+.status-label {
+  font-size: 13px;
+  color: var(--muted);
+  width: 90px;
   text-align: center;
 }
-#alert-close:hover { color: var(--red); }
 
-/* L4 border pulse */
-body.l4-critical {
-  animation: l4-pulse 1s ease-in-out infinite;
-}
-@keyframes l4-pulse {
-  0%,100% { box-shadow: inset 0 0 0 3px rgba(255,68,68,0.80); }
-  50%      { box-shadow: inset 0 0 0 3px rgba(255,68,68,0.15); }
-}
-
-/* ── FOOTER ── */
-#footer {
-  flex: 0 0 auto;
-  padding: 6px 0 10px;
+/* ── Mic button ──── */
+.mic-btn {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  background: rgba(229,192,123,0.08);
+  color: var(--gold);
+  font-size: 34px;
+  cursor: pointer;
   display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  color: var(--text-ghost);
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+.mic-btn::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(229,192,123,0.15);
+}
+.mic-btn:hover {
+  background: rgba(229,192,123,0.18);
+  transform: scale(1.04);
+}
+.mic-btn:active { transform: scale(0.96); }
+
+.mic-btn.recording {
+  border-color: var(--red);
+  background: rgba(224,108,117,0.18);
+  animation: micPulse 1s ease-in-out infinite;
+}
+.mic-btn.recording::before { border-color: rgba(224,108,117,0.3); }
+@keyframes micPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,108,117,0.5); }
+  50%       { box-shadow: 0 0 0 18px rgba(224,108,117,0); }
+}
+.mic-btn.processing {
+  border-color: var(--blue);
+  background: rgba(97,175,239,0.18);
+  animation: micSpin 1.2s linear infinite;
+}
+@keyframes micSpin { 100% { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════
+   CAMERA PREVIEW
+════════════════════════════════════════════════════ */
+.camera-preview {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 200px;
+  height: 150px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(229,192,123,0.3);
+  background: #000;
+  z-index: 50;
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+  pointer-events: none;
+  transition: opacity 0.3s, transform 0.3s;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.camera-preview.active {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+.camera-preview img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror */
+}
+.camera-preview .cam-label {
+  position: absolute;
+  top: 6px; left: 8px;
+  font-size: 10px;
+  color: rgba(229,192,123,0.7);
+  text-shadow: 0 1px 3px #000;
+  pointer-events: none;
+}
+.camera-preview .face-badge {
+  position: absolute;
+  bottom: 6px; right: 8px;
+  font-size: 11px;
+  background: rgba(229,192,123,0.85);
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.camera-preview .face-badge.visible { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════
+   GREETING TOAST
+════════════════════════════════════════════════════ */
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  background: rgba(229,192,123,0.15);
+  border: 1px solid rgba(229,192,123,0.4);
+  color: var(--gold);
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 15px;
+  z-index: 100;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ═══════════════════════════════════════════════════
+   RIPPLE (for speaking audio level)
+════════════════════════════════════════════════════ */
+.ripple-ring {
+  position: absolute;
+  width: 260px; height: 260px;
+  top: 50%; left: 50%;
+  margin-left: -130px; margin-top: -130px;
+  border-radius: 50%;
+  border: 2px solid rgba(229,192,123,0.3);
+  pointer-events: none;
+  opacity: 0;
+}
+body.speaking .ripple-ring {
+  opacity: 1;
+  animation: rippleOut 1.6s ease-out infinite;
+}
+body.speaking .ripple-ring:nth-child(2) { animation-delay: 0.5s; }
+body.speaking .ripple-ring:nth-child(3) { animation-delay: 1.0s; }
+@keyframes rippleOut {
+  0%   { transform: scale(0.9); opacity: 0.6; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════
+   SCROLLING STARS BACKGROUND
+════════════════════════════════════════════════════ */
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  animation: starTwinkle linear infinite;
+}
+
+@keyframes starTwinkle {
+  0%,100% { opacity: 0; }
+  50%      { opacity: 0.6; }
+}
+
+/* ═══════════════════════════════════════════════════
+   DASHBOARD OVERLAY
+════════════════════════════════════════════════════ */
+.dash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 36px 14px;
+  gap: 14px;
+  animation: dashIn 0.6s cubic-bezier(0.22,1,0.36,1);
+}
+@keyframes dashIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Clock */
+.dash-clock-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  flex-shrink: 0;
+}
+.dash-time-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+}
+.dash-hm {
+  font-size: clamp(80px, 11vw, 128px);
+  font-weight: 200;
+  color: var(--gold);
+  letter-spacing: -4px;
+  line-height: 1;
+  text-shadow: 0 0 60px rgba(229,192,123,0.35);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.dash-ss {
+  font-size: clamp(30px, 4vw, 44px);
+  font-weight: 200;
+  color: rgba(229,192,123,0.45);
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+  align-self: flex-end;
+  margin-bottom: 12px;
+}
+.dash-datestr {
+  font-size: clamp(13px, 1.6vw, 18px);
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+/* Grid */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+.dash-card {
+  background: rgba(16, 22, 36, 0.75);
+  border: 1px solid rgba(229,192,123,0.12);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.3s;
+}
+.dash-card:hover { border-color: rgba(229,192,123,0.25); }
+.dash-card-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  border-top: 1px solid rgba(0,255,65,0.08);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+.dash-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* Weather card */
+.dw-temp {
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 200;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.dw-desc { font-size: 15px; color: var(--text); margin-bottom: 5px; }
+.dw-meta { font-size: 12px; color: var(--muted); line-height: 1.9; }
+
+/* Linear task card */
+.dt-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  overflow: hidden;
+}
+.dt-item:last-child { border-bottom: none; }
+.dt-prio { flex-shrink: 0; font-size: 10px; margin-top: 3px; }
+.dt-title {
+  font-size: 13px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+/* Calendar card */
+.dc-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 6px;
+}
+.dc-time { font-size: 15px; color: var(--blue); }
+
+/* Video card */
+.dv-content {
+  font-size: 12px;
+  line-height: 1.75;
+  font-family: 'SF Mono', Menlo, 'Courier New', monospace;
+  color: rgba(224,230,240,0.75);
+  overflow: hidden;
+}
+.dv-line { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Quote & hint */
+.dash-quote {
+  width: 100%;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  padding: 6px 40px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+.dash-hint {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(90,107,138,0.38);
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+.dash-empty {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
 }
 </style>
+
 </head>
-<body>
+<body class="idle">
 
-<!-- Matrix Rain -->
-<canvas id="matrix-canvas"></canvas>
-<div class="scanlines"></div>
-<div class="crt-vignette"></div>
-<div class="glitch-flash"></div>
-<div class="hud-corner hud-tl"></div>
-<div class="hud-corner hud-tr"></div>
-<div class="hud-corner hud-bl"></div>
-<div class="hud-corner hud-br"></div>
+<!-- Starfield background -->
+<div class="stars" id="stars"></div>
 
-<div id="app">
-  <!-- HEADER -->
-  <div id="header">
-    <div id="sys-label">NANHARA.AI &nbsp;|&nbsp; <span id="sys-status">ONLINE</span></div>
-    <div id="clock">--:--:--</div>
-    <div id="date-label" id="date-display">----.--.--<br>---</div>
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<div class="layout">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <span class="brand">🦊 南溪</span>
+    <div class="conn-dot" id="connDot"></div>
+    <div class="spacer"></div>
+    <button class="cam-toggle" id="camToggle" onclick="toggleCamera()">📷 摄像头</button>
   </div>
 
-  <!-- AVATAR -->
-  <div id="avatar-zone">
-    <div id="outer-field"></div>
-    <div id="hex-wrap">
-      <!-- status ring + wave rings (behind hex) -->
-      <div id="status-ring"></div>
-      <div class="wave-ring" id="wave1" style="display:none"></div>
-      <div class="wave-ring" id="wave2" style="display:none"></div>
-      <div class="wave-ring" id="wave3" style="display:none"></div>
-      <svg id="hex-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- outer hex -->
-        <polygon points="100,8 183,54 183,146 100,192 17,146 17,54"
-          stroke="#00FF41" stroke-width="1.5" stroke-opacity="0.6" fill="none"/>
-        <!-- inner hex -->
-        <polygon points="100,22 169,63 169,137 100,178 31,137 31,63"
-          stroke="#00FF41" stroke-width="0.8" stroke-opacity="0.25" fill="none"/>
-        <!-- corner marks -->
-        <circle cx="100" cy="8" r="3" fill="#00FF41" opacity="0.8"/>
-        <circle cx="183" cy="54" r="3" fill="#00FF41" opacity="0.8"/>
-        <circle cx="183" cy="146" r="3" fill="#00FF41" opacity="0.8"/>
-        <circle cx="100" cy="192" r="3" fill="#00FF41" opacity="0.8"/>
-        <circle cx="17" cy="146" r="3" fill="#00FF41" opacity="0.8"/>
-        <circle cx="17" cy="54" r="3" fill="#00FF41" opacity="0.8"/>
-        <!-- animated traveling dot -->
-        <circle r="4" fill="#00FF41" opacity="0.9">
-          <animateMotion dur="6s" repeatCount="indefinite"
-            path="M100,8 L183,54 L183,146 L100,192 L17,146 L17,54 Z"/>
-        </circle>
-        <!-- data arc top-right -->
-        <path d="M140,20 A80,80 0 0,1 180,80" stroke="#00D2FF" stroke-width="1" stroke-opacity="0.4" fill="none"/>
-        <!-- data arc bottom-left -->
-        <path d="M60,180 A80,80 0 0,1 20,120" stroke="#00D2FF" stroke-width="1" stroke-opacity="0.4" fill="none"/>
+  <!-- Fox stage -->
+  <div class="fox-stage">
+    <!-- Ambient glow -->
+    <div class="ambient"></div>
+
+    <!-- Ripple rings (speaking) -->
+    <div class="ripple-ring"></div>
+    <div class="ripple-ring"></div>
+    <div class="ripple-ring"></div>
+
+    <!-- Orbit ring + particles (thinking) -->
+    <div class="orbit-ring"></div>
+    <div class="particles" id="particles">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+
+    <!-- Fox SVG character -->
+    <div class="fox-wrap">
+      <svg id="foxSvg" viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Face gradient -->
+          <radialGradient id="faceGrad" cx="50%" cy="42%" r="55%">
+            <stop offset="0%"   stop-color="#f0c868"/>
+            <stop offset="60%"  stop-color="#d4930a"/>
+            <stop offset="100%" stop-color="#a06008"/>
+          </radialGradient>
+          <!-- Ear gradient -->
+          <radialGradient id="earGrad" cx="50%" cy="80%" r="60%">
+            <stop offset="0%"   stop-color="#c07808"/>
+            <stop offset="100%" stop-color="#7a4a00"/>
+          </radialGradient>
+          <!-- Eye iris gradient -->
+          <radialGradient id="irisGrad" cx="40%" cy="35%" r="60%">
+            <stop offset="0%"   stop-color="#f5d78e"/>
+            <stop offset="50%"  stop-color="#e5a020"/>
+            <stop offset="100%" stop-color="#a05800"/>
+          </radialGradient>
+          <!-- Body/fur gradient -->
+          <radialGradient id="bodyGrad" cx="50%" cy="20%" r="70%">
+            <stop offset="0%"   stop-color="#c07808"/>
+            <stop offset="100%" stop-color="#6a3e00"/>
+          </radialGradient>
+          <!-- Tail gradient -->
+          <linearGradient id="tailGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#d4930a"/>
+            <stop offset="60%"  stop-color="#c07808"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.9"/>
+          </linearGradient>
+          <!-- Glow filter -->
+          <filter id="eyeGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- ── Tail (behind body) ── -->
+        <g id="foxTail">
+          <path d="M 200 390 Q 90 410 60 360 Q 30 310 80 285 Q 130 260 200 300 Z"
+                fill="url(#tailGrad)" opacity="0.85"/>
+          <!-- White tip -->
+          <path d="M 60 360 Q 30 310 80 285 Q 60 330 75 355 Z"
+                fill="white" opacity="0.7"/>
+        </g>
+
+        <!-- ── Body/chest ── -->
+        <ellipse cx="200" cy="400" rx="85" ry="70" fill="url(#bodyGrad)"/>
+        <!-- Chest fur (lighter) -->
+        <ellipse cx="200" cy="395" rx="52" ry="48" fill="#f0e0b0" opacity="0.3"/>
+
+        <!-- ── Left ear (outer) ── -->
+        <path d="M 108 165 L 115 52 L 180 148" fill="url(#earGrad)"/>
+        <!-- Left ear (inner pink) -->
+        <path d="M 120 155 L 125 75 L 168 144" fill="#ff8fab" opacity="0.85"/>
+        <!-- Left ear highlight -->
+        <path d="M 128 148 L 132 98 L 158 142" fill="#ffb8c8" opacity="0.4"/>
+
+        <!-- ── Right ear (outer) ── -->
+        <path d="M 292 165 L 285 52 L 220 148" fill="url(#earGrad)"/>
+        <!-- Right ear (inner pink) -->
+        <path d="M 280 155 L 275 75 L 232 144" fill="#ff8fab" opacity="0.85"/>
+        <!-- Right ear highlight -->
+        <path d="M 272 148 L 268 98 L 242 142" fill="#ffb8c8" opacity="0.4"/>
+
+        <!-- ── Face ── -->
+        <ellipse cx="200" cy="258" rx="140" ry="148" fill="url(#faceGrad)"/>
+
+        <!-- Face highlight (top) -->
+        <ellipse cx="200" cy="195" rx="80" ry="55" fill="#f8e080" opacity="0.18"/>
+
+        <!-- Muzzle area -->
+        <ellipse cx="200" cy="315" rx="62" ry="45" fill="#f0c060" opacity="0.45"/>
+
+        <!-- ── Forehead gem ── -->
+        <polygon points="200,148 208,164 200,174 192,164"
+                 fill="#61afef" filter="url(#eyeGlow)" opacity="0.9"/>
+        <polygon points="200,152 206,163 200,169 194,163"
+                 fill="#a8d8ff" opacity="0.6"/>
+
+        <!-- ── Cheek marks ── -->
+        <!-- Left cheek -->
+        <path d="M 88 272 Q 100 268 108 278" stroke="#c07808" stroke-width="2.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+        <path d="M 88 283 Q 100 279 108 289" stroke="#c07808" stroke-width="2.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+        <!-- Right cheek -->
+        <path d="M 312 272 Q 300 268 292 278" stroke="#c07808" stroke-width="2.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+        <path d="M 312 283 Q 300 279 292 289" stroke="#c07808" stroke-width="2.5" fill="none" opacity="0.5" stroke-linecap="round"/>
+
+        <!-- ── Left eye ── -->
+        <g id="foxEyeL" style="transform-origin: 150px 232px">
+          <!-- Eye socket shadow -->
+          <ellipse cx="150" cy="234" rx="34" ry="26" fill="#1a0e00" opacity="0.6"/>
+          <!-- Iris -->
+          <ellipse cx="150" cy="232" rx="26" ry="22" fill="url(#irisGrad)" filter="url(#eyeGlow)"/>
+          <!-- Pupil -->
+          <ellipse cx="150" cy="232" rx="11" ry="15" fill="#050810"/>
+          <!-- Slit pupil detail -->
+          <ellipse cx="150" cy="232" rx="3" ry="14" fill="#020508"/>
+          <!-- Highlight 1 -->
+          <ellipse cx="158" cy="223" rx="5" ry="4" fill="white" opacity="0.9"/>
+          <!-- Highlight 2 -->
+          <ellipse cx="143" cy="238" rx="2.5" ry="2" fill="white" opacity="0.5"/>
+          <!-- Eyelash lines -->
+          <path d="M 120 220 Q 125 215 132 216" stroke="#3a2000" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 124 212 Q 130 206 137 209" stroke="#3a2000" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 180 218 Q 176 213 170 215" stroke="#3a2000" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <!-- ── Right eye ── -->
+        <g id="foxEyeR" style="transform-origin: 250px 232px">
+          <ellipse cx="250" cy="234" rx="34" ry="26" fill="#1a0e00" opacity="0.6"/>
+          <ellipse cx="250" cy="232" rx="26" ry="22" fill="url(#irisGrad)" filter="url(#eyeGlow)"/>
+          <ellipse cx="250" cy="232" rx="11" ry="15" fill="#050810"/>
+          <ellipse cx="250" cy="232" rx="3"  ry="14" fill="#020508"/>
+          <ellipse cx="258" cy="223" rx="5"  ry="4"  fill="white" opacity="0.9"/>
+          <ellipse cx="243" cy="238" rx="2.5" ry="2" fill="white" opacity="0.5"/>
+          <path d="M 280 220 Q 275 215 268 216" stroke="#3a2000" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 276 212 Q 270 206 263 209" stroke="#3a2000" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <path d="M 220 218 Q 224 213 230 215" stroke="#3a2000" stroke-width="2" fill="none" stroke-linecap="round"/>
+        </g>
+
+        <!-- ── Nose ── -->
+        <path d="M 190 298 Q 200 290 210 298 L 207 308 Q 200 314 193 308 Z"
+              fill="#8b3a2a"/>
+        <path d="M 195 294 Q 200 291 205 294" fill="#b05040" opacity="0.6"/>
+        <ellipse cx="196" cy="297" rx="3" ry="2" fill="white" opacity="0.4"/>
+
+        <!-- ── Mouth: idle smile ── -->
+        <g id="foxMouthSmile">
+          <path d="M 184 320 Q 200 334 216 320"
+                stroke="#6a2a18" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- tiny fangs -->
+          <path d="M 192 321 L 194 328" stroke="#f0e0c0" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+          <path d="M 208 321 L 206 328" stroke="#f0e0c0" stroke-width="1.5" stroke-linecap="round" opacity="0.7"/>
+        </g>
+
+        <!-- ── Mouth: open (speaking) ── -->
+        <g id="foxMouthOpen">
+          <path d="M 183 318 Q 200 344 217 318"
+                stroke="#6a2a18" stroke-width="2.5" fill="#1a0808" stroke-linecap="round"/>
+          <!-- teeth -->
+          <path d="M 190 321 L 190 330 Q 196 332 196 330 L 196 321" fill="white" opacity="0.9"/>
+          <path d="M 204 321 L 204 330 Q 210 332 210 330 L 210 321" fill="white" opacity="0.9"/>
+          <!-- tongue hint -->
+          <ellipse cx="200" cy="334" rx="8" ry="5" fill="#e08080" opacity="0.7"/>
+        </g>
+
+        <!-- ── Fox ears tips (accent) ── -->
+        <circle cx="122" cy="60"  r="4" fill="#e5c07b" opacity="0.6"/>
+        <circle cx="278" cy="60"  r="4" fill="#e5c07b" opacity="0.6"/>
+
+        <!-- ── Hair/fringe details ── -->
+        <path d="M 155 160 Q 165 145 175 158" stroke="#c07808" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+        <path d="M 225 160 Q 235 145 245 158" stroke="#c07808" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.5"/>
+
       </svg>
-      <div id="avatar-circle">
-        <img src="/avatar.jpg" alt="南溪" onerror="this.style.display='none'">
-      </div>
+    </div><!-- /fox-wrap -->
+
+    <!-- Speech bubble -->
+    <div class="speech-bubble empty" id="speechBubble">按住下方按钮和我说话吧 ✨</div>
+
+    <!-- Last user text -->
+    <div class="last-user" id="lastUser"></div>
+
+    <!-- Waveform -->
+    <div class="waveform" id="waveform">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
     </div>
-    <div id="status-label">IDLE</div>
+
+  </div><!-- /fox-stage -->
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="status-label" id="statusLabel">按住说话</div>
+    <button class="mic-btn" id="micBtn"
+      onmousedown="startRec(event)" onmouseup="stopRec(event)"
+      ontouchstart="startRec(event)" ontouchend="stopRec(event)"
+      onmouseleave="stopRec(event)">🎤</button>
+    <div class="status-label" id="timerLabel"></div>
   </div>
 
-  <!-- DATA PANELS -->
-  <div id="data-panels">
-    <!-- Agent Status -->
-    <div class="panel" id="panel-agents">
-      <div class="panel-title">// AGENTS</div>
-      <div class="panel-row" id="agents-list">
-        <span class="val">LOADING...</span>
-      </div>
-    </div>
-    <!-- System Resources -->
-    <div class="panel" id="panel-sys">
-      <div class="panel-title">// SYSTEM</div>
-      <div class="panel-row" id="sys-cpu">CPU <span class="val" id="cpu-val">--</span>%</div>
-      <div class="panel-row" id="sys-mem">MEM <span class="val" id="mem-val">--</span>%</div>
-      <div class="panel-row" id="sys-tmp">TMP <span class="val amber" id="tmp-val">--</span>°C</div>
-    </div>
-    <!-- Finance -->
-    <div class="panel" id="panel-finance">
-      <div class="panel-title">// FINANCE</div>
-      <div class="panel-row">MRR <span class="val cyan" id="mrr-val">¥----</span></div>
-      <div class="panel-row">BAL <span class="val amber" id="bal-val">¥----</span></div>
-    </div>
-    <!-- App Stats -->
-    <div class="panel" id="panel-app">
-      <div class="panel-title">// APP_STATS</div>
-      <div class="panel-row">DAU <span class="val" id="dau-val">--</span></div>
-      <div class="panel-row">NEW <span class="val cyan" id="new-val">+--</span></div>
-      <div class="panel-row">REV <span class="val" id="rev-val">--</span></div>
-    </div>
-  </div>
+</div><!-- /layout -->
 
-  <!-- DIALOGUE -->
-  <div id="dialogue-zone">
-    <div class="bubble ai" id="init-bubble">SYSTEM INITIALIZED. AWAITING INPUT.</div>
-  </div>
-
-  <!-- RECORD BAR -->
-  <div id="record-bar">
-    <div id="space-key">SPACE</div>
-    <span id="rec-label">HOLD TO SPEAK</span>
-    <div id="rec-dot"></div>
-  </div>
-
-  <!-- L3 ALERT PANEL -->
-  <div id="alert-panel">
-    <div id="alert-panel-title">!! SYSTEM ALERT</div>
-    <div id="alert-list"></div>
-    <div id="alert-close" onclick="closeAlert()">[DISMISS]</div>
-  </div>
-
-  <!-- FOOTER -->
-  <div id="footer">
-    <span>NANHARA v3.0</span>
-    <span id="uptime-label">UP: 00:00:00</span>
-    <span id="footer-ip">192.168.3.x</span>
-  </div>
+<!-- Camera preview -->
+<div class="camera-preview" id="cameraPreview">
+  <span class="cam-label">📷 实时预览</span>
+  <img id="cameraImg" src="" alt="">
+  <div class="face-badge" id="faceBadge">👤 检测到人脸</div>
 </div>
 
+<!-- ── Dashboard Overlay ─────────────────────────────────────────────── -->
+<div id="dashboard" class="dash-overlay" style="display:none;">
+
+  <!-- Clock -->
+  <div class="dash-clock-wrap">
+    <div class="dash-time-row">
+      <span class="dash-hm"  id="dashHM">00:00</span>
+      <span class="dash-ss"  id="dashSS">:00</span>
+    </div>
+    <div class="dash-datestr" id="dashDate">----年--月--日</div>
+  </div>
+
+  <!-- Cards grid -->
+  <div class="dash-grid">
+
+    <!-- Weather -->
+    <div class="dash-card">
+      <div class="dash-card-title">🌤 无锡天气</div>
+      <div class="dash-card-body" id="dashWeather">
+        <div class="dash-empty">获取中...</div>
+      </div>
+    </div>
+
+    <!-- Linear -->
+    <div class="dash-card">
+      <div class="dash-card-title">📋 待办任务</div>
+      <div class="dash-card-body" id="dashLinear">
+        <div class="dash-empty">获取中...</div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="dash-card">
+      <div class="dash-card-title">📅 下一个日程</div>
+      <div class="dash-card-body" id="dashCalendar">
+        <div class="dash-empty">获取中...</div>
+      </div>
+    </div>
+
+    <!-- Video Progress -->
+    <div class="dash-card">
+      <div class="dash-card-title">🎬 南荒说进度</div>
+      <div class="dash-card-body" id="dashVideo">
+        <div class="dash-empty">获取中...</div>
+      </div>
+    </div>
+
+  </div><!-- /dash-grid -->
+
+  <!-- Quote -->
+  <div class="dash-quote" id="dashQuote">Talk is cheap. Show me the code.</div>
+
+  <!-- Hint -->
+  <div class="dash-hint">💬 开始说话或点击屏幕返回对话 · 每5分钟自动刷新</div>
+
+</div><!-- /dashboard -->
+
 <script>
-// ═══════════════ MATRIX RAIN ═══════════════
-const canvas = document.getElementById('matrix-canvas');
-const ctx = canvas.getContext('2d');
-let drops = [];
-
-function initMatrix() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  const cols = Math.floor(canvas.width / 16);
-  drops = Array(cols).fill(1);
-}
-
-function drawMatrix() {
-  ctx.fillStyle = 'rgba(0,0,0,0.05)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#00FF41';
-  ctx.font = '14px monospace';
-  drops.forEach((y, i) => {
-    const char = String.fromCharCode(0x30A0 + Math.random() * 96);
-    ctx.fillText(char, i * 16, y * 16);
-    if (y * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
-    drops[i]++;
-  });
-}
-
-initMatrix();
-window.addEventListener('resize', initMatrix);
-let matrixFrame = 0;
-function matrixLoop() {
-  matrixFrame++;
-  if (matrixFrame % 3 === 0) drawMatrix(); // ~20fps
-  requestAnimationFrame(matrixLoop);
-}
-matrixLoop();
-
-// ═══════════════ CLOCK ═══════════════
-const clock = document.getElementById('clock');
-const dateLbl = document.getElementById('date-label');
-const weekdays = ['日','一','二','三','四','五','六'];
-function updateClock() {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  const s = String(now.getSeconds()).padStart(2,'0');
-  clock.textContent = `${h}:${m}:${s}`;
-  const y = now.getFullYear();
-  const mo = String(now.getMonth()+1).padStart(2,'0');
-  const d = String(now.getDate()).padStart(2,'0');
-  dateLbl.innerHTML = `${y}-${mo}-${d}<br>星期${weekdays[now.getDay()]}`;
-}
-setInterval(updateClock, 1000);
-updateClock();
-
-// ═══════════════ UPTIME ═══════════════
-const startTime = Date.now();
-setInterval(() => {
-  const s = Math.floor((Date.now()-startTime)/1000);
-  const hh = String(Math.floor(s/3600)).padStart(2,'0');
-  const mm = String(Math.floor((s%3600)/60)).padStart(2,'0');
-  const ss = String(s%60).padStart(2,'0');
-  document.getElementById('uptime-label').textContent = `UP: ${hh}:${mm}:${ss}`;
-}, 1000);
-
-// ═══════════════ FINANCE DATA ═══════════════
-async function fetchFinance() {
-  try {
-    const r = await fetch('http://192.168.3.80:3080/api/finance/summary', {signal: AbortSignal.timeout(5000)});
-    if (!r.ok) return;
-    const d = await r.json();
-    if (d.mrr_cny != null) {
-      document.getElementById('mrr-val').textContent = '¥' + Math.round(d.mrr_cny).toLocaleString();
-    }
-    if (d.ledger_balance != null) {
-      document.getElementById('bal-val').textContent = '¥' + Math.round(d.ledger_balance).toLocaleString();
-    }
-  } catch(e) {}
-}
-fetchFinance();
-setInterval(fetchFinance, 5*60*1000);
-
-// ═══════════════ SYSTEM STATS (via Pi server) ═══════════════
-async function fetchSysStats() {
-  try {
-    const r = await fetch('/api/sys-stats', {signal: AbortSignal.timeout(3000)});
-    if (!r.ok) return;
-    const d = await r.json();
-    if (d.cpu != null) {
-      const cpuPct = Math.round(d.cpu);
-      document.getElementById('cpu-val').textContent = cpuPct;
-      const bar = document.getElementById('sys-cpu');
-      bar.innerHTML = `CPU <span class="val" id="cpu-val">${cpuPct}</span>% ${asciiBar(cpuPct)}`;
-    }
-    if (d.mem != null) {
-      const memPct = Math.round(d.mem);
-      document.getElementById('mem-val').textContent = memPct;
-    }
-    if (d.temp != null) {
-      document.getElementById('tmp-val').textContent = Math.round(d.temp);
-    }
-  } catch(e) {}
-}
-
-function asciiBar(pct, len=8) {
-  const fill = Math.round(pct/100*len);
-  return '<span class="ascii-bar"><span class="fill">' + '▓'.repeat(fill) + '</span>' + '░'.repeat(len-fill) + '</span>';
-}
-
-fetchSysStats();
-setInterval(fetchSysStats, 10*1000);
-
-// ═══════════════ STATUS LABEL ═══════════════
-const statusLabel = document.getElementById('status-label');
-const hexSvg = document.getElementById('hex-svg');
-
-const statusRing = document.getElementById('status-ring');
-const waves = [document.getElementById('wave1'), document.getElementById('wave2'), document.getElementById('wave3')];
-const outerField = document.getElementById('outer-field');
-
-function setStatus(s) {
-  const labels = {idle:'IDLE', listening:'LISTENING', processing:'PROCESSING', speaking:'SPEAKING'};
-  statusLabel.textContent = (labels[s] || s.toUpperCase());
-  statusLabel.dataset.state = s;
-
-  // hex speed + color
-  const polys = hexSvg.querySelectorAll('polygon');
-  if (s === 'listening') {
-    polys[0].style.stroke = '#FF4444';
-    hexSvg.style.animationDuration = '2s';
-    // outer field cyan
-    outerField.style.background = 'radial-gradient(circle, rgba(255,68,68,0.22) 0%, rgba(255,68,68,0.06) 40%, transparent 70%)';
-    outerField.style.animationDuration = '1s';
-  } else if (s === 'speaking') {
-    polys[0].style.stroke = '#00D2FF';
-    hexSvg.style.animationDuration = '10s';
-    outerField.style.background = 'radial-gradient(circle, rgba(0,210,255,0.20) 0%, rgba(0,210,255,0.06) 40%, transparent 70%)';
-    outerField.style.animationDuration = '1.2s';
-  } else {
-    polys[0].style.stroke = '#00FF41';
-    hexSvg.style.animationDuration = '60s';
-    outerField.style.background = 'radial-gradient(circle, rgba(0,255,65,0.18) 0%, rgba(0,255,65,0.05) 40%, transparent 70%)';
-    outerField.style.animationDuration = '3s';
+// ═══════════════════════════════════════════════════
+// STARS BACKGROUND
+// ═══════════════════════════════════════════════════
+(function() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 1;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      top:${Math.random()*100}%;
+      left:${Math.random()*100}%;
+      animation-duration:${3 + Math.random()*5}s;
+      animation-delay:${Math.random()*6}s;
+    `;
+    container.appendChild(s);
   }
+})();
 
-  // status ring class
-  statusRing.className = s === 'listening' ? 'listening' : (s === 'speaking' ? 'speaking' : '');
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const STATES = ['idle', 'listening', 'thinking', 'speaking'];
+let currentState = 'idle';
 
-  // wave rings — show only when speaking
-  const showWaves = (s === 'speaking');
-  waves.forEach(w => { w.style.display = showWaves ? 'block' : 'none'; });
-}
-setStatus('idle');
-
-// ═══════════════ DIALOGUE ═══════════════
-const dialogueZone = document.getElementById('dialogue-zone');
-
-function addBubble(text, role='ai') {
-  const div = document.createElement('div');
-  div.className = `bubble ${role}`;
-  div.textContent = text;
-  dialogueZone.appendChild(div);
-  // keep max 4 bubbles
-  while (dialogueZone.children.length > 4) {
-    dialogueZone.removeChild(dialogueZone.firstChild);
-  }
-  dialogueZone.scrollTop = dialogueZone.scrollHeight;
+function setState(s) {
+  if (!STATES.includes(s)) s = 'idle';
+  document.body.className = s;
+  currentState = s;
+  const labels = {
+    idle:        '按住说话',
+    listening:   '正在录音...',
+    thinking:    '思考中...',
+    speaking:    '南溪说:',
+  };
+  document.getElementById('statusLabel').textContent = labels[s] || '';
 }
 
-// typewriter effect for AI
-function typewriter(text, el, speed=28) {
-  el.textContent = '';
-  let i = 0;
-  const t = setInterval(() => {
-    el.textContent += text[i++];
-    if (i >= text.length) clearInterval(t);
-  }, speed);
-}
+// ═══════════════════════════════════════════════════
+// WEBSOCKET
+// ═══════════════════════════════════════════════════
+const connDot = document.getElementById('connDot');
+let ws, wsRetry = 0;
+let lastShownMsgId = null;  // 防止 HTTP + WebSocket 双重显示
 
-// ═══════════════ RECORDING ═══════════════
-const recordBar = document.getElementById('record-bar');
-const recLabel = document.getElementById('rec-label');
-let mediaRecorder, audioChunks = [];
-let isRecording = false;
-
-async function startRecording() {
-  if (isRecording) return;
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({audio: true});
-    mediaRecorder = new MediaRecorder(stream);
-    audioChunks = [];
-    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-    mediaRecorder.onstop = sendAudio;
-    mediaRecorder.start();
-    isRecording = true;
-    recordBar.classList.add('active');
-    recLabel.textContent = 'RECORDING...';
-    setStatus('listening');
-  } catch(e) {
-    recLabel.textContent = 'MIC_ERROR';
-  }
-}
-
-function stopRecording() {
-  if (!isRecording || !mediaRecorder) return;
-  mediaRecorder.stop();
-  mediaRecorder.stream.getTracks().forEach(t => t.stop());
-  isRecording = false;
-  recordBar.classList.remove('active');
-  recLabel.textContent = 'PROCESSING...';
-  setStatus('processing');
-}
-
-async function sendAudio() {
-  const blob = new Blob(audioChunks, {type: 'audio/webm'});
-  const fd = new FormData();
-  fd.append('audio', blob, 'input.webm');
-  try {
-    const r = await fetch('/api/transcribe', {method:'POST', body: fd});
-    const d = await r.json();
-    if (d.text) {
-      addBubble(d.text, 'user');
-      await sendChat(d.text);
-    }
-  } catch(e) {
-    recLabel.textContent = 'HOLD TO SPEAK';
-    setStatus('idle');
-  }
-  recLabel.textContent = 'HOLD TO SPEAK';
-}
-
-async function sendChat(text) {
-  setStatus('processing');
-  try {
-    const r = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({message: text})
-    });
-    const d = await r.json();
-    const reply = d.reply || d.text || '...';
-    setStatus('speaking');
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble ai';
-    dialogueZone.appendChild(bubble);
-    while (dialogueZone.children.length > 4) dialogueZone.removeChild(dialogueZone.firstChild);
-    typewriter(reply, bubble);
-    setTimeout(() => setStatus('idle'), reply.length * 28 + 1000);
-  } catch(e) {
-    setStatus('idle');
-  }
-  recLabel.textContent = 'HOLD TO SPEAK';
-}
-
-// Space key
-document.addEventListener('keydown', e => { if (e.code === 'Space' && !e.repeat) { e.preventDefault(); startRecording(); } });
-document.addEventListener('keyup', e => { if (e.code === 'Space') { e.preventDefault(); stopRecording(); } });
-recordBar.addEventListener('pointerdown', startRecording);
-recordBar.addEventListener('pointerup', stopRecording);
-recordBar.addEventListener('pointerleave', () => { if (isRecording) stopRecording(); });
-
-// ═══════════════ AGENTS PANEL ═══════════════
-async function fetchAgents() {
-  try {
-    const r = await fetch('http://192.168.3.80:3080/api/dashboard', {signal: AbortSignal.timeout(5000)});
-    if (!r.ok) return;
-    const d = await r.json();
-    const agents = d.agents || [];
-    const ul = document.getElementById('agents-list');
-    if (!agents.length) return;
-    ul.innerHTML = agents.slice(0,5).map(a => {
-      const dot = a.status === 'active' ? '<span style="color:#00FF41">●</span>' : '<span style="color:rgba(0,255,65,0.3)">○</span>';
-      const name = (a.name || a.id || '?').toUpperCase().slice(0,8).padEnd(8);
-      const st = (a.status || 'idle').toUpperCase().slice(0,6);
-      return `<div class="panel-row">${dot} ${name} <span class="val" style="font-size:9px">${st}</span></div>`;
-    }).join('');
-  } catch(e) {}
-}
-fetchAgents();
-setInterval(fetchAgents, 30*1000);
-
-// ═══════════════ ALERT SYSTEM ═══════════════
-const alertPanel = document.getElementById('alert-panel');
-const alertList = document.getElementById('alert-list');
-let alertQueue = [];
-
-function showAlert(msg, level='L3') {
-  const ts = new Date().toLocaleTimeString('zh-CN', {hour12:false});
-  alertQueue.unshift({msg, level, ts});
-  if (alertQueue.length > 10) alertQueue.pop();
-  alertList.innerHTML = alertQueue.map(a =>
-    `<div class="alert-item"><span class="al-lvl">[${a.level}]</span> ${a.ts} ${a.msg}</div>`
-  ).join('');
-  alertPanel.classList.add('show');
-  if (level === 'L4') {
-    document.body.classList.add('l4-critical');
-  }
-}
-function closeAlert() {
-  alertPanel.classList.remove('show');
-  document.body.classList.remove('l4-critical');
-}
-
-// ═══════════════ WEBSOCKET (Pi server) ═══════════════
 function connectWS() {
-  try {
-    const ws = new WebSocket(`ws://${location.host}`);
-    ws.onmessage = e => {
-      try {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'alert') {
-          showAlert(msg.message || msg.text || 'Unknown alert', msg.level || 'L3');
-        } else if (msg.type === 'reply') {
-          setStatus('speaking');
-          const bubble = document.createElement('div');
-          bubble.className = 'bubble ai';
-          dialogueZone.appendChild(bubble);
-          while (dialogueZone.children.length > 4) dialogueZone.removeChild(dialogueZone.firstChild);
-          typewriter(msg.text, bubble);
-          setTimeout(() => setStatus('idle'), msg.text.length * 28 + 1200);
-        } else if (msg.type === 'status') {
-          setStatus(msg.state || 'idle');
-        }
-      } catch(e) {}
-    };
-    ws.onclose = () => setTimeout(connectWS, 3000);
-    ws.onerror = () => ws.close();
-  } catch(e) { setTimeout(connectWS, 5000); }
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}`);
+
+  ws.onopen = () => {
+    connDot.className = 'conn-dot online';
+    wsRetry = 0;
+  };
+  ws.onclose = () => {
+    connDot.className = 'conn-dot error';
+    const delay = Math.min(1000 * Math.pow(2, wsRetry++), 15000);
+    setTimeout(connectWS, delay);
+  };
+  ws.onerror = () => {};
+
+  ws.onmessage = (e) => {
+    let data;
+    try { data = JSON.parse(e.data); } catch { return; }
+
+    if (data.type === 'history') {
+      if (data.messages.length > 0) {
+        const last = data.messages[data.messages.length - 1];
+        if (last.role === 'assistant') showReply(last.text);
+      }
+    } else if (data.type === 'message') {
+      // assistant 消息由 HTTP 响应显示（更快），WebSocket 不重复处理
+      if (data.message.role !== 'assistant') {
+        showUserMsg(data.message.content || data.message.text || '');
+        resetIdleTimer();
+      }
+    } else if (data.type === 'cmd') {
+      handleRemoteCmd(data.cmd, data.payload);
+    } else if (data.type === 'audio') {
+      playAudio(data.url);
+    } else if (data.type === 'state') {
+      setState(data.state);
+      if (data.state !== 'idle') resetIdleTimer(); // active conversation
+    } else if (data.type === 'error') {
+      showToast('⚠️ ' + data.text, 4000);
+      setState('idle');
+    } else if (data.type === 'greeting') {
+      handleGreeting(data.text);
+    }
+  };
 }
 connectWS();
+
+// ═══════════════════════════════════════════════════
+// SPEECH BUBBLE
+// ═══════════════════════════════════════════════════
+const speechBubble = document.getElementById('speechBubble');
+const lastUser     = document.getElementById('lastUser');
+let typingTimer    = null;
+
+function showReply(text) {
+  clearTimeout(typingTimer);
+  speechBubble.classList.remove('empty', 'typing');
+  speechBubble.innerHTML = '';
+  speechBubble.classList.add('typing');
+
+  // Parse: actions in （）, dialogue in "", display-only in 【】
+  const parts = [];
+  const regex = /（([^）]*)）|["""]([^"""]*)["""]|【([^】]*)】/g;
+  let lastIdx = 0;
+  let m;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > lastIdx) {
+      const between = text.slice(lastIdx, m.index).trim();
+      if (between) parts.push({ type: 'plain', text: between });
+    }
+    if (m[1] !== undefined) {
+      parts.push({ type: 'action', text: m[1] });
+    } else if (m[2] !== undefined) {
+      parts.push({ type: 'speech', text: m[2] });
+    } else if (m[3] !== undefined) {
+      parts.push({ type: 'display', text: m[3] });
+    }
+    lastIdx = regex.lastIndex;
+  }
+  if (lastIdx < text.length) {
+    const rest = text.slice(lastIdx).trim();
+    if (rest) parts.push({ type: 'plain', text: rest });
+  }
+  if (parts.length === 0) parts.push({ type: 'plain', text: text });
+
+  // Render with typewriter effect
+  let partIdx = 0, charIdx = 0;
+  const interval = setInterval(() => {
+    if (partIdx >= parts.length) {
+      clearInterval(interval);
+      speechBubble.classList.remove('typing');
+      return;
+    }
+    const part = parts[partIdx];
+    if (charIdx === 0) {
+      const el = document.createElement(part.type === 'action' ? 'em' : (part.type === 'display' ? 'pre' : 'span'));
+      if (part.type === 'action') {
+        el.style.cssText = 'color:#e5c07b;font-style:italic;display:block;margin:4px 0;font-size:0.85em;';
+        el.textContent = '（';
+      } else if (part.type === 'speech') {
+        el.style.cssText = 'color:#fff;display:block;margin:4px 0;font-size:1.05em;';
+        el.textContent = '"';
+      } else if (part.type === 'display') {
+        el.style.cssText = 'color:#61afef;display:block;margin:6px 0;padding:8px 12px;background:rgba(97,175,239,0.1);border-radius:6px;border-left:3px solid #61afef;font-size:0.85em;font-family:monospace;white-space:pre-wrap;';
+        el.textContent = '';
+      }
+      el.className = 'reply-part-' + partIdx;
+      speechBubble.appendChild(el);
+    }
+    const el = speechBubble.querySelector('.reply-part-' + partIdx);
+    if (el) {
+      el.textContent += part.text[charIdx];
+      charIdx++;
+      if (charIdx >= part.text.length) {
+        if (part.type === 'action') el.textContent += '）';
+        else if (part.type === 'speech') el.textContent += '"';
+        // display type: no wrapping chars needed
+        partIdx++;
+        charIdx = 0;
+      }
+    }
+    speechBubble.scrollTop = speechBubble.scrollHeight;
+  }, 40);
+}
+
+function showUserMsg(text) {
+  lastUser.textContent = '你: ' + text;
+}
+
+// ═══════════════════════════════════════════════════
+// RECORDING
+// ═══════════════════════════════════════════════════
+let mediaRecorder = null;
+let audioChunks   = [];
+let recording     = false;
+let recTimer      = null;
+let recSecs       = 0;
+let analyser      = null;
+let waveAnimFrame = null;
+let audioCtx      = null;
+
+// VAD (连续对话模式)
+let vadMode       = false;
+let vadStream     = null;
+let vadAnalyser   = null;
+let vadAnimFrame  = null;
+let vadSilenceTimer = null;
+let vadSpeaking   = false;
+const VAD_THRESHOLD = 18;    // 音量阈值 (0-255)
+const VAD_SILENCE_MS = 1500; // 停顿多久自动发送
+
+const micBtn    = document.getElementById('micBtn');
+const timerLabel = document.getElementById('timerLabel');
+const waveformEl = document.getElementById('waveform');
+const waveBars  = waveformEl.querySelectorAll('.bar');
+
+async function startRec(e) {
+  if (e) e.preventDefault();
+  // Block recording while speaking or processing to prevent echo loop
+  if (recording || currentState === 'thinking' || currentState === 'speaking') return;
+
+  // Resume AudioContext if suspended (needed after user gesture)
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 48000,
+        channelCount: 1,
+      }
+    });
+
+    // Set up AnalyserNode for waveform
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    source.connect(analyser);
+    startWaveformDraw();
+
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus') ? 'audio/ogg;codecs=opus' : 'audio/webm');
+
+    mediaRecorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 64000 });
+    audioChunks   = [];
+    mediaRecorder.ondataavailable = (ev) => { if (ev.data.size > 0) audioChunks.push(ev.data); };
+    mediaRecorder.start(200);
+
+    recording = true;
+    setState('listening');
+    micBtn.classList.add('recording');
+    recSecs = 0;
+    timerLabel.textContent = '0s';
+    recTimer = setInterval(() => { timerLabel.textContent = ++recSecs + 's'; }, 1000);
+
+  } catch (err) {
+    console.error('Mic error:', err);
+    showToast('⚠️ 麦克风访问失败: ' + err.message, 5000);
+  }
+}
+
+function stopRec(e) {
+  if (e) e.preventDefault();
+  if (!recording || !mediaRecorder) return;
+
+  clearInterval(recTimer);
+  cancelAnimationFrame(waveAnimFrame);
+  timerLabel.textContent = '';
+  recording = false;
+  micBtn.classList.remove('recording');
+  setState('thinking');
+  micBtn.classList.add('processing');
+
+  mediaRecorder.onstop = async () => {
+    const blob = new Blob(audioChunks, { type: audioChunks[0]?.type || 'audio/webm' });
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    analyser = null;
+
+    if (blob.size < 2000) {
+      micBtn.classList.remove('processing');
+      setState('idle');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('audio', blob, 'recording.webm');
+
+    try {
+      console.log('Sending blob:', blob.size, blob.type);
+      const resp = await fetch('/api/audio', { method: 'POST', body: formData });
+      console.log('Response:', resp.status);
+      if (!resp.ok) {
+        const txt = await resp.text();
+        console.error('Server error:', txt);
+        showToast('⚠️ 服务器错误 ' + resp.status, 4000);
+        setState('idle');
+      } else {
+        // HTTP 响应到达时立即显示文字，记录 id 防止 WS 重复显示
+        const data = await resp.json().catch(() => null);
+        if (data?.msgId)   lastShownMsgId = data.msgId;
+        if (data?.transcript) showUserMsg(data.transcript);
+        if (data?.reply)      showReply(data.reply);
+      }
+    } catch (err) {
+      console.error('Fetch failed:', err.name, err.message);
+      showToast('⚠️ 发送失败: ' + err.message, 4000);
+      setState('idle');
+    }
+    micBtn.classList.remove('processing');
+  };
+
+  mediaRecorder.stop();
+}
+
+function startWaveformDraw() {
+  const data = new Uint8Array(analyser?.frequencyBinCount || 32);
+  function draw() {
+    if (!analyser) return;
+    analyser.getByteFrequencyData(data);
+    waveBars.forEach((bar, i) => {
+      const val = (data[i % data.length] / 255) * 34 + 4;
+      bar.style.height = val + 'px';
+    });
+    waveAnimFrame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ═══════════════════════════════════════════════════
+// AUDIO PLAYBACK
+// ═══════════════════════════════════════════════════
+let currentAudio = null;
+
+function playAudio(url) {
+  // Stop any ongoing recording before playing (prevent echo loop)
+  if (recording) stopRec();
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  const audio = new Audio(url);
+  currentAudio = audio;
+  audio.volume = 1.0;
+
+  audio.onended = () => {
+    setState('idle');
+    currentAudio = null;
+  };
+  audio.onerror = (err) => {
+    console.error('Audio error:', err);
+    setState('idle');
+    currentAudio = null;
+  };
+
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(err => {
+      console.error('Autoplay blocked:', err);
+      // Show a "tap to hear" button if autoplay is blocked
+      showToast('🔇 点击屏幕以播放声音', 3000);
+      document.addEventListener('click', () => audio.play(), { once: true });
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// CAMERA
+// ═══════════════════════════════════════════════════
+const cameraPreview  = document.getElementById('cameraPreview');
+const cameraImg      = document.getElementById('cameraImg');
+const camToggle      = document.getElementById('camToggle');
+const faceBadge      = document.getElementById('faceBadge');
+let cameraActive     = false;
+let cameraInterval   = null;
+let faceDetectIntvl  = null;
+let lastGreetTime    = 0;
+
+function toggleCamera() {
+  cameraActive = !cameraActive;
+  if (cameraActive) {
+    cameraPreview.classList.add('active');
+    camToggle.classList.add('active');
+    refreshCamera();
+    cameraInterval  = setInterval(refreshCamera,  3000);
+    faceDetectIntvl = setInterval(runFaceDetect, 8000);
+  } else {
+    cameraPreview.classList.remove('active');
+    camToggle.classList.remove('active');
+    clearInterval(cameraInterval);
+    clearInterval(faceDetectIntvl);
+    faceBadge.classList.remove('visible');
+  }
+}
+
+function refreshCamera() {
+  cameraImg.src = '/api/snapshot?t=' + Date.now();
+}
+
+async function runFaceDetect() {
+  if (!cameraActive) return;
+  try {
+    const r = await fetch('/api/face-detect');
+    const d = await r.json();
+    if (d.faces > 0) {
+      faceBadge.classList.add('visible');
+      setTimeout(() => faceBadge.classList.remove('visible'), 3000);
+    }
+  } catch {}
+}
+
+// ═══════════════════════════════════════════════════
+// GREETING
+// ═══════════════════════════════════════════════════
+function handleGreeting(text) {
+  const now = Date.now();
+  if (now - lastGreetTime < 30000) return; // Debounce 30s
+  lastGreetTime = now;
+
+  showReply(text);
+  showToast('👤 ' + text, 4000);
+
+  // Auto TTS greeting via server
+  fetch('/api/audio', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    // We'll just show text for greeting, no audio trigger from client
+  }).catch(() => {});
+}
+
+// ═══════════════════════════════════════════════════
+// REMOTE COMMANDS
+// ═══════════════════════════════════════════════════
+function handleRemoteCmd(cmd, payload) {
+  console.log('Remote cmd:', cmd, payload);
+  switch (cmd) {
+    case 'vad-on':
+      if (!vadMode) startVAD();
+      showToast('🎙️ 南溪远程开启连续对话', 2000);
+      break;
+    case 'vad-off':
+      if (vadMode) stopVAD();
+      showToast('🔇 南溪远程关闭连续对话', 2000);
+      break;
+    case 'sleep':
+      document.body.classList.add('sleeping');
+      showToast('😴 进入待机模式', 2000);
+      break;
+    case 'wake':
+      document.body.classList.remove('sleeping');
+      showToast('👋 南溪唤醒！', 2000);
+      break;
+    case 'trigger-record':
+      // 唤醒词触发：自动录音 N 秒
+      showToast('🔔 南溪南溪！开始录音...', 3000);
+      autoRecord(data.duration || 3000);
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// AUTO RECORD (唤醒词触发)
+// ═══════════════════════════════════════════════════
+async function autoRecord(durationMs) {
+  if (recording || currentState === 'thinking' || currentState === 'speaking') return;
+  await startRec(null);
+  if (recording) {
+    setTimeout(() => { if (recording) stopRec(null); }, durationMs);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+const toastEl = document.getElementById('toast');
+let toastTimer = null;
+
+function showToast(msg, duration = 3000) {
+  clearTimeout(toastTimer);
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+// Unlock audio context on first tap (needed for iOS/some browsers)
+document.addEventListener('click', () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}, { once: true });
+
+// Prevent context menu on long press
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+// Keyboard: space = push-to-talk, V = toggle VAD continuous mode
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat && !vadMode) { e.preventDefault(); startRec(e); }
+  if (e.code === 'KeyV' && !e.repeat) { e.preventDefault(); toggleVAD(); }
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space' && !vadMode) { e.preventDefault(); stopRec(e); }
+});
+
+// ── VAD 连续对话模式 (RMS based, no CDN) ─────────────────────────────────
+// 原理：用 AudioWorklet 持续计算 RMS 音量，超阈值开录，静音超时停录发送
+
+let vadProcessor = null;
+
+async function toggleVAD() {
+  if (vadMode) stopVAD();
+  else await startVAD();
+}
+
+async function startVAD() {
+  try {
+    timerLabel.textContent = '初始化...';
+
+    if (!audioCtx) audioCtx = new AudioContext({ sampleRate: 16000 });
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
+
+    vadStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 16000, channelCount: 1 }
+    });
+
+    const source = audioCtx.createMediaStreamSource(vadStream);
+
+    // ScriptProcessor for RMS monitoring (works everywhere, no CDN)
+    const bufSize = 2048;
+    vadProcessor = audioCtx.createScriptProcessor(bufSize, 1, 1);
+
+    let speechBuffer = [];
+    let silenceCount = 0;
+    const SILENCE_FRAMES = Math.ceil((VAD_SILENCE_MS / 1000) * (audioCtx.sampleRate / bufSize));
+    const NOISE_FLOOR_FRAMES = 30; // calibrate for ~1s
+    let noiseFloor = 0.02;
+    let noiseFrames = [];
+    let consecutiveSpeechFrames = 0;
+    const SPEECH_CONFIRM_FRAMES = 4; // 需要连续4帧才算真正开口（防误触发）
+
+    vadProcessor.onaudioprocess = (e) => {
+      if (!vadMode) return;
+      const data = e.inputBuffer.getChannelData(0);
+
+      // RMS
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) sum += data[i] * data[i];
+      const rms = Math.sqrt(sum / data.length);
+
+      // Auto-calibrate noise floor in first second
+      if (noiseFrames.length < NOISE_FLOOR_FRAMES) {
+        noiseFrames.push(rms);
+        if (noiseFrames.length === NOISE_FLOOR_FRAMES) {
+          const avg = noiseFrames.reduce((a,b)=>a+b,0)/noiseFrames.length;
+          noiseFloor = Math.max(0.015, avg * 4.0); // 4倍底噪，更保守
+          console.log('🎚️ Noise floor:', noiseFloor.toFixed(4), '(avg:', avg.toFixed(4), ')');
+        }
+        return;
+      }
+
+      const isSpeech = rms > noiseFloor;
+      const isAvailable = currentState === 'idle' || currentState === 'listening';
+
+      if (isSpeech && isAvailable) {
+        consecutiveSpeechFrames++;
+        speechBuffer.push(...data);
+        silenceCount = 0;
+
+        // 需要连续多帧才触发，防止一声咳嗽/椅子声就发
+        if (!vadSpeaking && consecutiveSpeechFrames >= SPEECH_CONFIRM_FRAMES) {
+          vadSpeaking = true;
+          setState('listening');
+          micBtn.classList.add('recording');
+          timerLabel.textContent = '👂';
+        }
+      } else if (vadSpeaking) {
+        speechBuffer.push(...data);
+        silenceCount++;
+
+        if (silenceCount >= SILENCE_FRAMES) {
+          // Enough silence — send
+          vadSpeaking = false;
+          micBtn.classList.remove('recording');
+          setState('thinking');
+          timerLabel.textContent = '👂';
+
+          const capturedBuffer = Float32Array.from(speechBuffer);
+          speechBuffer = [];
+          silenceCount = 0;
+
+          if (capturedBuffer.length > audioCtx.sampleRate * 0.3) {
+            sendVADAudio(capturedBuffer, audioCtx.sampleRate);
+          } else {
+            setState('idle');
+          }
+        }
+      } else {
+        consecutiveSpeechFrames = 0; // reset consecutive counter
+        if (!vadSpeaking) speechBuffer = []; // don't accumulate silence
+      }
+    };
+
+    source.connect(vadProcessor);
+    vadProcessor.connect(audioCtx.destination);
+
+    vadMode = true;
+    micBtn.style.boxShadow = '0 0 0 4px #e5c07b';
+    timerLabel.textContent = '🔇校准...';
+    showToast('🎙️ 连续对话开启，正在校准环境音...', 2500);
+    setTimeout(() => { if (vadMode) timerLabel.textContent = '👂'; }, 1200);
+
+  } catch (err) {
+    timerLabel.textContent = '';
+    showToast('VAD 初始化失败: ' + err.message, 4000);
+    console.error('VAD error:', err);
+  }
+}
+
+function stopVAD() {
+  vadMode = false;
+  vadSpeaking = false;
+  if (vadProcessor) { vadProcessor.disconnect(); vadProcessor = null; }
+  if (vadStream) { vadStream.getTracks().forEach(t => t.stop()); vadStream = null; }
+  micBtn.style.boxShadow = '';
+  micBtn.classList.remove('recording');
+  timerLabel.textContent = '';
+  showToast('连续对话已关闭', 2000);
+}
+
+async function sendVADAudio(float32Samples, sampleRate) {
+  const wavBlob = float32ToWav(float32Samples, sampleRate);
+  console.log('VAD audio blob size:', wavBlob.size, 'samples:', float32Samples.length, 'sr:', sampleRate);
+  const formData = new FormData();
+  formData.append('audio', wavBlob, 'recording.wav');
+  try {
+    const resp = await fetch('/api/audio', { method: 'POST', body: formData });
+    console.log('Audio resp:', resp.status);
+    if (!resp.ok) {
+      const txt = await resp.text();
+      console.error('Server error:', resp.status, txt);
+      showToast('⚠️ 服务器错误: ' + resp.status, 3000);
+      setState('idle');
+    } else {
+      // HTTP 响应到达时立即显示文字（不等 WebSocket）
+      const data = await resp.json().catch(() => null);
+      if (data?.msgId)      lastShownMsgId = data.msgId;
+      if (data?.transcript) showUserMsg(data.transcript);
+      if (data?.reply)      showReply(data.reply);
+    }
+  } catch (err) {
+    console.error('Audio fetch threw:', err.name, err.message);
+    showToast('⚠️ 发送失败: ' + err.message, 4000);
+    setState('idle');
+  }
+}
+
+function float32ToWav(samples, sampleRate) {
+  const buf = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buf);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o+i, s.charCodeAt(i)); };
+  ws(0,'RIFF'); view.setUint32(4, 36+samples.length*2, true); ws(8,'WAVE');
+  ws(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
+  view.setUint32(24,sampleRate,true); view.setUint32(28,sampleRate*2,true);
+  view.setUint16(32,2,true); view.setUint16(34,16,true);
+  ws(36,'data'); view.setUint32(40,samples.length*2,true);
+  let off=44;
+  for (let i=0; i<samples.length; i++, off+=2) {
+    const s=Math.max(-1,Math.min(1,samples[i]));
+    view.setInt16(off, s<0?s*0x8000:s*0x7FFF, true);
+  }
+  return new Blob([buf], {type:'audio/wav'});
+}
+
+// ═══════════════════════════════════════════════════
+// DASHBOARD — idle screen with real-time data
+// ═══════════════════════════════════════════════════
+const IDLE_MS         = 30 * 1000;      // 30 s idle → show dashboard
+const DASH_REFRESH_MS = 5 * 60 * 1000;  // refresh data every 5 min
+const QUOTE_ROTATE_MS = 5 * 60 * 1000;  // rotate quote every 5 min
+
+var dashIdleTimer    = null;
+var dashActive       = false;
+var dashClockTick    = null;
+var dashDataInterval = null;
+var dashQuoteInterval= null;
+
+var QUOTES = [
+  '"Talk is cheap. Show me the code." — Linus Torvalds',
+  '"Bad programmers worry about code. Good programmers worry about data structures." — Linus Torvalds',
+  '"Make it work, make it right, make it fast." — Kent Beck',
+  '"Programs must be written for people to read." — Abelson & Sussman',
+  '"Done is better than perfect." — Facebook',
+  '"Premature optimization is the root of all evil." — Donald Knuth',
+  '"Debugging is twice as hard as writing the code." — Brian Kernighan',
+  '"The best code is no code at all." — Jeff Atwood',
+  '"First, solve the problem. Then, write the code." — John Johnson',
+  '"Code is read more often than it is written." — Guido van Rossum',
+  '"专注当下，把今天的事做好。"',
+  '"每天进步 1%，一年后强大 37 倍。"',
+  '"行动是治愈恐惧的良药；犹豫拖延将不断滋养恐惧。"',
+  '"南荒说——让更多人看见真实世界。"',
+  '"好的代码是最好的注释。让代码说话。"',
+  '"做难而正确的事，放弃简单而错误的事。"',
+  '"热爱可抵岁月漫长。技术永无止境。"',
+  '"Keep it simple, stupid." — KISS principle',
+];
+
+function resetIdleTimer() {
+  clearTimeout(dashIdleTimer);
+  if (dashActive) hideDashboard();
+  dashIdleTimer = setTimeout(showDashboard, IDLE_MS);
+}
+
+function showDashboard() {
+  if (dashActive) return;
+  dashActive = true;
+  document.getElementById('dashboard').style.display = 'flex';
+  dashTickClock();
+  dashClockTick     = setInterval(dashTickClock, 1000);
+  dashRotateQuote();
+  dashFetchData();
+  dashDataInterval  = setInterval(dashFetchData, DASH_REFRESH_MS);
+  dashQuoteInterval = setInterval(dashRotateQuote, QUOTE_ROTATE_MS);
+}
+
+function hideDashboard() {
+  if (!dashActive) return;
+  dashActive = false;
+  document.getElementById('dashboard').style.display = 'none';
+  clearInterval(dashClockTick);
+  clearInterval(dashDataInterval);
+  clearInterval(dashQuoteInterval);
+  dashClockTick = null;
+}
+
+function dashTickClock() {
+  var now = new Date();
+  var hm  = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+  var ss  = ':' + pad2(now.getSeconds());
+  var days= ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  var dt  = now.getFullYear() + '年' + pad2(now.getMonth()+1) + '月' + pad2(now.getDate()) + '日  ·  ' + days[now.getDay()];
+  var hmEl= document.getElementById('dashHM');
+  var ssEl= document.getElementById('dashSS');
+  var dtEl= document.getElementById('dashDate');
+  if (hmEl) hmEl.textContent = hm;
+  if (ssEl) ssEl.textContent = ss;
+  if (dtEl) dtEl.textContent = dt;
+}
+
+function pad2(n) { return String(n).padStart(2,'0'); }
+
+function dashRotateQuote() {
+  var el = document.getElementById('dashQuote');
+  if (el) el.textContent = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+}
+
+async function dashFetchData() {
+  try {
+    var r = await fetch('/api/dashboard');
+    if (!r.ok) return;
+    var data = await r.json();
+    dashRenderWeather(data.weather);
+    dashRenderLinear(data.linear);
+    dashRenderCalendar(data.calendar);
+    dashRenderVideo(data.videoProgress);
+  } catch (e) { console.error('Dashboard fetch error:', e); }
+}
+
+function dashRenderWeather(w) {
+  var el = document.getElementById('dashWeather');
+  if (!el) return;
+  if (!w || w.error) {
+    el.innerHTML = '<div class="dash-empty">天气数据暂时无法获取</div>';
+    return;
+  }
+  // WMO weather code → emoji
+  var wc = w.weatherCode;
+  var wmoEmoji = {0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
+    51:'🌦️',53:'🌦️',55:'🌧️',61:'🌦️',63:'🌧️',65:'⛈️',66:'🌧️',67:'⛈️',
+    71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',
+    85:'🌨️',86:'❄️',95:'⛈️',96:'⛈️',99:'⛈️'};
+  var emoji = wmoEmoji[wc] || '🌤️';
+  var desc = w.desc || '未知';
+  el.innerHTML =
+    '<div class="dw-temp">' + (w.temp||'--') + '°<span style="font-size:0.45em;opacity:0.7;">C</span></div>' +
+    '<div class="dw-desc">' + emoji + ' ' + desc + '</div>' +
+    '<div class="dw-meta">' +
+      '体感 ' + (w.feelsLike||'--') + '°C<br>' +
+      '湿度 ' + (w.humidity||'--') + '% &nbsp;·&nbsp; 风速 ' + (w.windSpeed||'--') + ' km/h' +
+    '</div>';
+}
+
+function dashRenderLinear(tasks) {
+  var el = document.getElementById('dashLinear');
+  if (!el) return;
+  if (!tasks || tasks.length === 0) {
+    el.innerHTML = '<div class="dash-empty">🎉 暂无待办任务</div>';
+    return;
+  }
+  var picons = { 0:'⚪', 1:'🔴', 2:'🟠', 3:'🟡', 4:'🔵' };
+  el.innerHTML = tasks.slice(0,7).map(function(t) {
+    return '<div class="dt-item">' +
+      '<span class="dt-prio">' + (picons[t.priority]||'⚪') + '</span>' +
+      '<span class="dt-title" title="' + escH(t.title) + '">' + escH(t.title) + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+function dashRenderCalendar(cal) {
+  var el = document.getElementById('dashCalendar');
+  if (!el) return;
+  if (!cal) {
+    el.innerHTML = '<div class="dash-empty">近期无日程 ✓</div>';
+    return;
+  }
+  el.innerHTML =
+    '<div class="dc-title">' + escH(cal.title) + '</div>' +
+    '<div class="dc-time">🕐 ' + escH(dashFmtDate(cal.date)) + '</div>';
+}
+
+function dashRenderVideo(progress) {
+  var el = document.getElementById('dashVideo');
+  if (!el) return;
+  if (!progress) {
+    el.innerHTML = '<div class="dash-empty">暂无进度数据</div>';
+    return;
+  }
+  var lines = progress.split('\n').filter(function(l){ return l.trim(); }).slice(-10);
+  el.innerHTML = '<div class="dv-content">' +
+    lines.map(function(l) {
+      return '<div class="dv-line">' + escH(l.replace(/^#+\s*/,'').trim()) + '</div>';
+    }).join('') +
+    '</div>';
+}
+
+function dashFmtDate(str) {
+  if (!str) return str;
+  try {
+    var d = new Date(str);
+    if (isNaN(d.getTime())) return str;
+    var now = new Date();
+    var tm  = d.toLocaleTimeString('zh-CN', { hour:'2-digit', minute:'2-digit' });
+    if (d.toDateString() === now.toDateString()) return '今天 ' + tm;
+    var tom = new Date(now); tom.setDate(now.getDate()+1);
+    if (d.toDateString() === tom.toDateString()) return '明天 ' + tm;
+    return (d.getMonth()+1) + '月' + d.getDate() + '日 ' + tm;
+  } catch(e) { return str; }
+}
+
+function escH(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Hook idle timer into user interactions
+document.addEventListener('mousedown',  resetIdleTimer, { passive: true });
+document.addEventListener('touchstart', resetIdleTimer, { passive: true });
+document.addEventListener('keydown',    resetIdleTimer, { passive: true });
+
+// Kick off idle countdown on page load
+resetIdleTimer();
+
+// Initial state
+setState('idle');
+console.log('🦊 南溪 Pi-Talk 数字人界面 v2.0 + Dashboard');
 </script>
 </body>
 </html>
