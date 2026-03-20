@@ -148,8 +148,8 @@ html,body{
 .fox-wrap{
   flex-shrink:0;
   width:100%;
-  height:30vh;
-  min-height:160px;
+  height:28vh;
+  min-height:130px;
   position:relative;
   overflow:hidden;
 }
@@ -166,13 +166,13 @@ html,body{
 /* ─── STATUS TEXT ────────────────────────────────── */
 .status-text{
   flex-shrink:0;
-  font-size:12px;letter-spacing:4px;
+  font-size:11px;letter-spacing:3px;
   color:var(--gold);
   text-shadow:0 0 10px rgba(245,200,66,0.5);
-  padding:3px 0 5px;
+  padding:2px 0 3px;
   text-transform:none;
   transition:color 0.4s;
-  height:22px;
+  height:18px;
 }
 body.listening .status-text{color:var(--red);text-shadow:0 0 10px rgba(224,108,117,0.6)}
 body.thinking  .status-text{color:var(--blue);text-shadow:0 0 10px rgba(168,216,255,0.6)}
@@ -228,16 +228,16 @@ body.speaking  .status-text{color:var(--gold);text-shadow:0 0 14px rgba(245,200,
   width:100%;
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:5px;
-  padding:3px 0;
+  gap:4px;
+  padding:2px 0;
 }
 
 .data-card{
   background:rgba(12,20,40,0.7);
   border:1px solid rgba(168,216,255,0.08);
   border-radius:8px;
-  padding:6px 9px;
-  display:flex;flex-direction:column;gap:2px;
+  padding:4px 7px;
+  display:flex;flex-direction:column;gap:1px;
   transition:border-color 0.3s;
   overflow:hidden;
   position:relative;
@@ -251,10 +251,10 @@ body.speaking  .status-text{color:var(--gold);text-shadow:0 0 14px rgba(245,200,
 .card-header{
   display:flex;align-items:center;gap:5px;
 }
-.card-icon{font-size:11px}
-.card-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.card-icon{font-size:10px}
+.card-label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
 .card-value{
-  font-size:11px;color:var(--text);line-height:1.45;
+  font-size:10px;color:var(--text);line-height:1.4;
   font-variant-numeric:tabular-nums;
 }
 .card-value .hi{color:var(--gold)}
@@ -294,8 +294,8 @@ body.listening .wbar:nth-child(even) {animation:wv 0.5s ease-in-out infinite alt
 .controls-area{
   flex-shrink:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:6px 0 10px;
-  gap:4px;
+  padding:4px 0 8px;
+  gap:3px;
 }
 
 /* Record button */
@@ -403,7 +403,7 @@ body.thinking .thinking-dots{opacity:1}
 }
 .chart-canvas{
   width:100%;
-  height:90px;
+  height:70px;
   display:block;
   border-radius:4px;
 }
@@ -470,7 +470,7 @@ body.thinking .thinking-dots{opacity:1}
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">💰</span><span class="card-label">财务</span></div>
-        <div class="card-value" id="cardFin">Apple <span class="hi">$34.95</span> <span class="ok">↑95%</span><br>昨日 <span class="lo">$17.97</span> · MRR 累计<br>目标 38% <span class="pbar">████</span><span class="pbar-dim">░░░░░░</span></div>
+        <div class="card-value" id="cardFin">Apple <span class="hi">$41.94</span> <span class="ok">↑133%</span><br>昨日 <span class="lo">$17.97</span> · MRR 累计<br>目标 38% <span class="pbar">████</span><span class="pbar-dim">░░░░░░</span></div>
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">☁️</span><span class="card-label">无锡天气</span></div>
@@ -482,7 +482,7 @@ body.thinking .thinking-dots{opacity:1}
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">👤</span><span class="card-label">用户</span></div>
-        <div class="card-value" id="cardUsers">今日新增 <span class="hi">53</span> 人<br>昨日 <span class="lo">89</span> 人 <span class="red">↓40%</span><br>本周合计 <span class="ok">503</span> 人</div>
+        <div class="card-value" id="cardUsers">活跃会员 <span class="hi">197</span> 人<br>今日新增 <span class="lo">56</span> 人 <span class="red">↓37%</span><br>昨日 <span class="dim">89</span> 人</div>
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">🔔</span><span class="card-label">提醒</span></div>
@@ -490,15 +490,15 @@ body.thinking .thinking-dots{opacity:1}
       </div>
       <!-- 用户增长柱状图 -->
       <div class="data-card full-width">
-        <div class="card-header"><span class="card-icon">📈</span><span class="card-label">新增用户（近7日）</span></div>
+        <div class="card-header"><span class="card-icon">📈</span><span class="card-label">新增用户（近30日）</span></div>
         <canvas class="chart-canvas" id="chartUsers"></canvas>
-        <div class="chart-footer">今日 <span style="color:var(--gold)">53人</span></div>
+        <div class="chart-footer">今日 <span style="color:var(--gold)">56人</span></div>
       </div>
       <!-- Apple收入折线图 -->
       <div class="data-card full-width">
-        <div class="card-header"><span class="card-icon">💰</span><span class="card-label">Apple收入（近7日，USD）</span></div>
+        <div class="card-header"><span class="card-icon">💰</span><span class="card-label">Apple收入（近30日，USD）</span></div>
         <canvas class="chart-canvas" id="chartRevenue"></canvas>
-        <div class="chart-footer">今日 <span style="color:var(--blue)">$34.95</span> · 峰值 <span style="color:var(--gold)">⭐ 3/18 $71.96</span></div>
+        <div class="chart-footer">今日 <span style="color:var(--blue)">$41.94</span> · 峰值 <span style="color:var(--gold)">⭐ 2/24 $628.93</span></div>
       </div>
     </div>
 
@@ -1266,7 +1266,7 @@ async function autoRecord(ms) {
 // Mock defaults (used if API returns empty)
 const MOCK = {
   sys:    { cpu: 48, mem: 29, temp: 39, disk: 67, netUp: '1.2', netDown: '0.8' },
-  fin:    { mrr: '$34.95', mrrGrowth: '↑95%', today: '$17.97', bal: '¥85,200', goalPct: 38 },
+  fin:    { mrr: '$41.94', mrrGrowth: '↑133%', today: '$17.97', bal: '¥85,200', goalPct: 38 },
   wx:     { temp: 14, desc: '多云', hum: 72, wind: '3级', tmrEmoji: '🌤', tmrTemp: 16, d2Emoji: '🌧', d2Temp: 12, d2Desc: '小雨' },
   tasks:  { pending: 3, total: 5, donePct: 40 }
 };
@@ -1422,17 +1422,25 @@ console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
 // CHARTS — Pure Canvas 2D, no external libs
 // ═══════════════════════════════════════════════════
 (function initCharts() {
-  const USER_DATA    = [57, 64, 67, 79, 94, 89, 53];
-  const USER_LABELS  = ['14','15','16','17','18','19','20'];
-  const REV_DATA     = [62.95, 34.95, 17.92, 21.98, 71.96, 17.97, 34.95];
-  const REV_LABELS   = ['14','15','16','17','18','19','20'];
+  const userDays = ["2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/16","3/17","3/18","3/19","3/20"];
+  const userVals = [73,78,67,81,89,85,81,75,64,89,77,76,79,57,89,57,56,69,65,78,69,77,61,57,64,67,79,94,89,56];
+  const revDays  = ["2/19","2/20","2/21","2/22","2/23","2/24","2/25","2/26","2/27","2/28","3/1","3/2","3/3","3/4","3/5","3/6","3/7","3/8","3/9","3/10","3/11","3/12","3/13","3/14","3/15","3/16","3/17","3/18","3/19","3/20"];
+  const revVals  = [132.99,59.99,13.98,50.95,44.90,628.93,23.95,6.99,6.99,23.97,10.98,54.99,8.98,6.99,15.97,32.95,8.98,83.95,13.98,17.97,73.97,13.98,21.98,62.95,34.95,17.92,21.98,71.96,17.97,41.94];
+  // Show label only every 5 days to avoid crowding
+  function sparseLabels(days) {
+    return days.map((d, i) => (i % 5 === 0 || i === days.length - 1) ? d : '');
+  }
+  const USER_DATA    = userVals;
+  const USER_LABELS  = sparseLabels(userDays);
+  const REV_DATA     = revVals;
+  const REV_LABELS   = sparseLabels(revDays);
 
   function drawBarChart(canvasId, data, labels, opts) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.offsetWidth || canvas.parentElement.offsetWidth || 300;
-    const H = 90;
+    const H = 70;
     canvas.width  = W * dpr;
     canvas.height = H * dpr;
     canvas.style.width  = W + 'px';
@@ -1440,11 +1448,11 @@ console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
-    const padL = 4, padR = 4, padT = 10, padB = 20;
+    const padL = 4, padR = 4, padT = 10, padB = 16;
     const chartW = W - padL - padR;
     const chartH = H - padT - padB;
     const n = data.length;
-    const barW = Math.floor(chartW / n * 0.65);
+    const barW = Math.max(2, Math.floor(chartW / n * 0.72));
     const gap  = (chartW - barW * n) / (n + 1);
     const maxV = Math.max(...data) * 1.1;
 
@@ -1469,20 +1477,16 @@ console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
       }
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.roundRect(x, y, barW, bh, [2, 2, 0, 0]);
+      ctx.roundRect(x, y, barW, bh, [1, 1, 0, 0]);
       ctx.fill();
 
-      // Value label on top
-      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(192,208,232,0.6)';
-      ctx.font = isToday ? `bold ${Math.max(8,barW-1)}px sans-serif` : `${Math.max(7,barW-2)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(v, x + barW / 2, y - 2);
-
-      // X label
-      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(61,80,112,0.9)';
-      ctx.font = `9px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.fillText(labels[i], x + barW / 2, H - 5);
+      // X label (sparse only)
+      if (labels[i]) {
+        ctx.fillStyle = isToday ? '#f5c842' : 'rgba(61,80,112,0.9)';
+        ctx.font = `8px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[i], x + barW / 2, H - 3);
+      }
     });
   }
 
@@ -1491,7 +1495,7 @@ console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
     if (!canvas) return;
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.offsetWidth || canvas.parentElement.offsetWidth || 300;
-    const H = 90;
+    const H = 70;
     canvas.width  = W * dpr;
     canvas.height = H * dpr;
     canvas.style.width  = W + 'px';
@@ -1499,7 +1503,7 @@ console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
-    const padL = 4, padR = 4, padT = 14, padB = 20;
+    const padL = 4, padR = 4, padT = 14, padB = 16;
     const chartW = W - padL - padR;
     const chartH = H - padT - padB;
     const n = data.length;
@@ -1531,7 +1535,7 @@ console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
     ctx.moveTo(px(0), py(data[0]));
     for (let i = 1; i < n; i++) ctx.lineTo(px(i), py(data[i]));
     ctx.strokeStyle = '#a8d8ff';
-    ctx.lineWidth   = 2;
+    ctx.lineWidth   = 1.5;
     ctx.lineJoin    = 'round';
     ctx.stroke();
 
@@ -1541,35 +1545,50 @@ console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
       const isPeak  = (i === maxIdx);
       const isToday = (i === n - 1);
 
-      // Dot
-      ctx.beginPath();
-      ctx.arc(cx, cy, isPeak ? 4.5 : 3, 0, Math.PI * 2);
-      ctx.fillStyle = isPeak ? '#f5c842' : '#a8d8ff';
-      ctx.fill();
-      if (isPeak) {
-        ctx.strokeStyle = 'rgba(245,200,66,0.5)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+      // Only draw dots for peak and today (too many for 30 days)
+      if (isPeak || isToday) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, isPeak ? 4 : 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = isPeak ? '#f5c842' : '#a8d8ff';
+        ctx.fill();
+        if (isPeak) {
+          ctx.strokeStyle = 'rgba(245,200,66,0.5)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
       }
 
-      // Peak star label
+      // Peak gold triangle marker
       if (isPeak) {
         ctx.fillStyle = '#f5c842';
-        ctx.font = 'bold 8px sans-serif';
+        ctx.font = 'bold 7px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('⭐$' + v.toFixed(2), cx, cy - 8);
+        // Draw triangle above dot
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 6);
+        ctx.lineTo(cx - 5, cy - 14);
+        ctx.lineTo(cx + 5, cy - 14);
+        ctx.closePath();
+        ctx.fillStyle = '#f5c842';
+        ctx.fill();
+        ctx.fillStyle = '#f5c842';
+        ctx.font = 'bold 7px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('$628', cx, cy - 16);
       } else if (isToday) {
         ctx.fillStyle = '#a8d8ff';
-        ctx.font = '8px sans-serif';
+        ctx.font = '7px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('$' + v.toFixed(2), cx, cy - 7);
+        ctx.fillText('$' + v.toFixed(2), cx, cy - 6);
       }
 
-      // X label
-      ctx.fillStyle = isToday ? '#a8d8ff' : 'rgba(61,80,112,0.9)';
-      ctx.font = '9px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(labels[i], cx, H - 5);
+      // X label (sparse only)
+      if (labels[i]) {
+        ctx.fillStyle = isToday ? '#a8d8ff' : 'rgba(61,80,112,0.9)';
+        ctx.font = '8px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[i], cx, H - 3);
+      }
     });
   }
 
