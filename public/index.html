@@ -261,6 +261,7 @@ body.speaking  .status-text{color:var(--gold);text-shadow:0 0 14px rgba(245,200,
 .card-value .lo{color:var(--blue2)}
 .card-value .ok{color:var(--green)}
 .card-value .dim{color:var(--muted)}
+.card-value .red{color:var(--red)}
 .pbar{
   display:inline-block;color:var(--gold);letter-spacing:-1px;font-size:10px;
 }
@@ -395,6 +396,23 @@ body.thinking .thinking-dots{opacity:1}
 
 /* ─── MISC ───────────────────────────────────────── */
 .spacer{flex:1}
+
+/* ─── CHART CARDS ────────────────────────────────── */
+.data-card.full-width{
+  grid-column: 1 / -1;
+}
+.chart-canvas{
+  width:100%;
+  height:90px;
+  display:block;
+  border-radius:4px;
+}
+.chart-footer{
+  text-align:center;
+  font-size:10px;
+  color:var(--muted);
+  margin-top:2px;
+}
 </style>
 </head>
 <body class="idle">
@@ -452,7 +470,7 @@ body.thinking .thinking-dots{opacity:1}
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">💰</span><span class="card-label">财务</span></div>
-        <div class="card-value" id="cardFin">MRR <span class="hi">¥12,380</span> <span class="ok">+8.3%</span><br>今日 <span class="lo">¥420</span> · 余额 <span class="hi">¥85,200</span><br>目标 38% <span class="pbar">████</span><span class="pbar-dim">░░░░░░</span></div>
+        <div class="card-value" id="cardFin">Apple <span class="hi">$34.95</span> <span class="ok">↑95%</span><br>昨日 <span class="lo">$17.97</span> · MRR 累计<br>目标 38% <span class="pbar">████</span><span class="pbar-dim">░░░░░░</span></div>
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">☁️</span><span class="card-label">无锡天气</span></div>
@@ -463,12 +481,24 @@ body.thinking .thinking-dots{opacity:1}
         <div class="card-value" id="cardTask"><span class="hi">3</span>待/<span class="ok">5</span>今日<br>EP76上传 <span class="ok">✅</span> Pi界面 🔄<br>卜瓜分析 <span class="dim">⏳</span><br>完成率 40% <span class="pbar">████</span><span class="pbar-dim">░░░░░░</span></div>
       </div>
       <div class="data-card">
-        <div class="card-header"><span class="card-icon">📺</span><span class="card-label">南荒说</span></div>
-        <div class="card-value" id="cardContent">EP76 <span class="ok">✅</span> 抖音+视频号<br>播放 <span class="dim">--</span> · 粉丝 <span class="dim">--</span></div>
+        <div class="card-header"><span class="card-icon">👤</span><span class="card-label">用户</span></div>
+        <div class="card-value" id="cardUsers">今日新增 <span class="hi">53</span> 人<br>昨日 <span class="lo">89</span> 人 <span class="red">↓40%</span><br>本周合计 <span class="ok">503</span> 人</div>
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">🔔</span><span class="card-label">提醒</span></div>
         <div class="card-value" id="cardRemind">最近提醒 <span class="dim">无</span><br>下次发布 <span class="lo">EP77</span> <span class="dim">待定</span></div>
+      </div>
+      <!-- 用户增长柱状图 -->
+      <div class="data-card full-width">
+        <div class="card-header"><span class="card-icon">📈</span><span class="card-label">新增用户（近7日）</span></div>
+        <canvas class="chart-canvas" id="chartUsers"></canvas>
+        <div class="chart-footer">今日 <span style="color:var(--gold)">53人</span></div>
+      </div>
+      <!-- Apple收入折线图 -->
+      <div class="data-card full-width">
+        <div class="card-header"><span class="card-icon">💰</span><span class="card-label">Apple收入（近7日，USD）</span></div>
+        <canvas class="chart-canvas" id="chartRevenue"></canvas>
+        <div class="chart-footer">今日 <span style="color:var(--blue)">$34.95</span> · 峰值 <span style="color:var(--gold)">⭐ 3/18 $71.96</span></div>
       </div>
     </div>
 
@@ -1236,7 +1266,7 @@ async function autoRecord(ms) {
 // Mock defaults (used if API returns empty)
 const MOCK = {
   sys:    { cpu: 48, mem: 29, temp: 39, disk: 67, netUp: '1.2', netDown: '0.8' },
-  fin:    { mrr: '¥12,380', mrrGrowth: '+8.3%', today: '¥420', bal: '¥85,200', goalPct: 38 },
+  fin:    { mrr: '$34.95', mrrGrowth: '↑95%', today: '$17.97', bal: '¥85,200', goalPct: 38 },
   wx:     { temp: 14, desc: '多云', hum: 72, wind: '3级', tmrEmoji: '🌤', tmrTemp: 16, d2Emoji: '🌧', d2Temp: 12, d2Desc: '小雨' },
   tasks:  { pending: 3, total: 5, donePct: 40 }
 };
@@ -1266,14 +1296,14 @@ function updateSysCard(data) {
 function updateFinCard(data) {
   const el = document.getElementById('cardFin');
   if (!el) return;
-  const mrr      = data?.mrr        ?? MOCK.fin.mrr;
-  const growth   = data?.mrrGrowth  ?? MOCK.fin.mrrGrowth;
-  const today    = data?.today      ?? MOCK.fin.today;
-  const bal      = data?.balance    ?? MOCK.fin.bal;
-  const goalPct  = data?.goalPct    ?? MOCK.fin.goalPct;
+  const appleToday = data?.appleToday ?? MOCK.fin.mrr;
+  const growth     = data?.mrrGrowth  ?? MOCK.fin.mrrGrowth;
+  const appleYest  = data?.appleYest  ?? MOCK.fin.today;
+  const bal        = data?.balance    ?? MOCK.fin.bal;
+  const goalPct    = data?.goalPct    ?? MOCK.fin.goalPct;
   el.innerHTML =
-    'MRR <span class="hi">' + mrr + '</span> <span class="ok">' + growth + '</span><br>' +
-    '今日 <span class="lo">' + today + '</span> · 余额 <span class="hi">' + bal + '</span><br>' +
+    'Apple <span class="hi">' + appleToday + '</span> <span class="ok">' + growth + '</span><br>' +
+    '昨日 <span class="lo">' + appleYest + '</span> · MRR 累计<br>' +
     '目标 ' + goalPct + '% ' + pbar(goalPct, 10);
 }
 
@@ -1387,6 +1417,176 @@ document.addEventListener('keyup', e => {
 // Initial state
 setState('idle');
 console.log('🦊 南溪 · 魔镜 v3.0 — Three.js fox + dark mirror UI');
+
+// ═══════════════════════════════════════════════════
+// CHARTS — Pure Canvas 2D, no external libs
+// ═══════════════════════════════════════════════════
+(function initCharts() {
+  const USER_DATA    = [57, 64, 67, 79, 94, 89, 53];
+  const USER_LABELS  = ['14','15','16','17','18','19','20'];
+  const REV_DATA     = [62.95, 34.95, 17.92, 21.98, 71.96, 17.97, 34.95];
+  const REV_LABELS   = ['14','15','16','17','18','19','20'];
+
+  function drawBarChart(canvasId, data, labels, opts) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth || canvas.parentElement.offsetWidth || 300;
+    const H = 90;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const padL = 4, padR = 4, padT = 10, padB = 20;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const n = data.length;
+    const barW = Math.floor(chartW / n * 0.65);
+    const gap  = (chartW - barW * n) / (n + 1);
+    const maxV = Math.max(...data) * 1.1;
+
+    // Background
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.beginPath(); ctx.roundRect(0, 0, W, H, 5); ctx.fill();
+
+    // Bars
+    data.forEach((v, i) => {
+      const x = padL + gap + i * (barW + gap);
+      const bh = (v / maxV) * chartH;
+      const y  = padT + chartH - bh;
+
+      const isToday = (i === n - 1);
+      const grad = ctx.createLinearGradient(0, y, 0, y + bh);
+      if (isToday) {
+        grad.addColorStop(0, '#f5c842');
+        grad.addColorStop(1, 'rgba(245,200,66,0.3)');
+      } else {
+        grad.addColorStop(0, 'rgba(245,200,66,0.7)');
+        grad.addColorStop(1, 'rgba(245,200,66,0.15)');
+      }
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, bh, [2, 2, 0, 0]);
+      ctx.fill();
+
+      // Value label on top
+      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(192,208,232,0.6)';
+      ctx.font = isToday ? `bold ${Math.max(8,barW-1)}px sans-serif` : `${Math.max(7,barW-2)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(v, x + barW / 2, y - 2);
+
+      // X label
+      ctx.fillStyle = isToday ? '#f5c842' : 'rgba(61,80,112,0.9)';
+      ctx.font = `9px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(labels[i], x + barW / 2, H - 5);
+    });
+  }
+
+  function drawLineChart(canvasId, data, labels) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = canvas.offsetWidth || canvas.parentElement.offsetWidth || 300;
+    const H = 90;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    canvas.style.width  = W + 'px';
+    canvas.style.height = H + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+
+    const padL = 4, padR = 4, padT = 14, padB = 20;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const n = data.length;
+    const maxV = Math.max(...data) * 1.1;
+    const maxIdx = data.indexOf(Math.max(...data));
+
+    function px(i) { return padL + (i / (n - 1)) * chartW; }
+    function py(v) { return padT + chartH - (v / maxV) * chartH; }
+
+    // Background
+    ctx.fillStyle = 'rgba(255,255,255,0.03)';
+    ctx.beginPath(); ctx.roundRect(0, 0, W, H, 5); ctx.fill();
+
+    // Gradient fill below line
+    const fillGrad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
+    fillGrad.addColorStop(0, 'rgba(168,216,255,0.25)');
+    fillGrad.addColorStop(1, 'rgba(168,216,255,0.02)');
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(data[0]));
+    for (let i = 1; i < n; i++) ctx.lineTo(px(i), py(data[i]));
+    ctx.lineTo(px(n - 1), padT + chartH);
+    ctx.lineTo(px(0),     padT + chartH);
+    ctx.closePath();
+    ctx.fillStyle = fillGrad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(px(0), py(data[0]));
+    for (let i = 1; i < n; i++) ctx.lineTo(px(i), py(data[i]));
+    ctx.strokeStyle = '#a8d8ff';
+    ctx.lineWidth   = 2;
+    ctx.lineJoin    = 'round';
+    ctx.stroke();
+
+    // Dots + labels
+    data.forEach((v, i) => {
+      const cx = px(i), cy = py(v);
+      const isPeak  = (i === maxIdx);
+      const isToday = (i === n - 1);
+
+      // Dot
+      ctx.beginPath();
+      ctx.arc(cx, cy, isPeak ? 4.5 : 3, 0, Math.PI * 2);
+      ctx.fillStyle = isPeak ? '#f5c842' : '#a8d8ff';
+      ctx.fill();
+      if (isPeak) {
+        ctx.strokeStyle = 'rgba(245,200,66,0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Peak star label
+      if (isPeak) {
+        ctx.fillStyle = '#f5c842';
+        ctx.font = 'bold 8px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⭐$' + v.toFixed(2), cx, cy - 8);
+      } else if (isToday) {
+        ctx.fillStyle = '#a8d8ff';
+        ctx.font = '8px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('$' + v.toFixed(2), cx, cy - 7);
+      }
+
+      // X label
+      ctx.fillStyle = isToday ? '#a8d8ff' : 'rgba(61,80,112,0.9)';
+      ctx.font = '9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(labels[i], cx, H - 5);
+    });
+  }
+
+  function renderCharts() {
+    drawBarChart('chartUsers',  USER_DATA, USER_LABELS);
+    drawLineChart('chartRevenue', REV_DATA, REV_LABELS);
+  }
+
+  // Draw after layout is ready
+  if (document.readyState === 'complete') {
+    renderCharts();
+  } else {
+    window.addEventListener('load', renderCharts);
+  }
+  // Also redraw on resize
+  window.addEventListener('resize', renderCharts);
+})();
 </script>
 </body>
 </html>
