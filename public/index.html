@@ -27,6 +27,9 @@
 
 html,body{
   width:100%;height:100%;
+  min-height:100vh;
+  min-height:100dvh;
+  margin:0;padding:0;
   background:var(--dark);
   color:var(--text);
   font-family:'Noto Sans SC',-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;
@@ -39,7 +42,8 @@ html,body{
 /* ─── MIRROR FRAME ───────────────────────────────── */
 .mirror{
   position:fixed;
-  inset:6px;
+  inset:0;
+  top:0;left:0;right:0;bottom:0;
   border:2px solid #1a2540;
   border-radius:3px;
   overflow:hidden;
@@ -110,6 +114,8 @@ html,body{
   position:absolute;inset:0;
   display:flex;flex-direction:column;align-items:center;
   padding:0 12px;
+  height:100%;
+  overflow:hidden;
 }
 
 /* ─── HEADER: CLOCK ──────────────────────────────── */
@@ -142,7 +148,8 @@ html,body{
 .fox-wrap{
   flex-shrink:0;
   width:100%;
-  height:36vh;
+  height:30vh;
+  min-height:160px;
   position:relative;
   overflow:hidden;
 }
@@ -176,7 +183,7 @@ body.speaking  .status-text{color:var(--gold);text-shadow:0 0 14px rgba(245,200,
   flex-shrink:0;
   width:100%;
   min-height:0;
-  max-height:18vh;
+  max-height:12vh;
   overflow:hidden;
   display:flex;flex-direction:column;gap:5px;
   padding:0 4px;
@@ -215,21 +222,21 @@ body.speaking  .status-text{color:var(--gold);text-shadow:0 0 14px rgba(245,200,
   text-align:right;
 }
 
-/* ─── DATA PANEL 2×2 ─────────────────────────────── */
+/* ─── DATA PANEL 3×2 ─────────────────────────────── */
 .data-grid{
   flex-shrink:0;
   width:100%;
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:6px;
-  padding:4px 0;
+  gap:5px;
+  padding:3px 0;
 }
 
 .data-card{
   background:rgba(12,20,40,0.7);
   border:1px solid rgba(168,216,255,0.08);
   border-radius:8px;
-  padding:7px 10px;
+  padding:6px 9px;
   display:flex;flex-direction:column;gap:2px;
   transition:border-color 0.3s;
   overflow:hidden;
@@ -247,11 +254,17 @@ body.speaking  .status-text{color:var(--gold);text-shadow:0 0 14px rgba(245,200,
 .card-icon{font-size:11px}
 .card-label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
 .card-value{
-  font-size:12px;color:var(--text);line-height:1.4;
+  font-size:11px;color:var(--text);line-height:1.45;
   font-variant-numeric:tabular-nums;
 }
 .card-value .hi{color:var(--gold)}
 .card-value .lo{color:var(--blue2)}
+.card-value .ok{color:var(--green)}
+.card-value .dim{color:var(--muted)}
+.pbar{
+  display:inline-block;color:var(--gold);letter-spacing:-1px;font-size:10px;
+}
+.pbar-dim{color:var(--muted);letter-spacing:-1px;font-size:10px}
 
 /* ─── WAVEFORM ───────────────────────────────────── */
 .waveform{
@@ -278,10 +291,9 @@ body.listening .wbar:nth-child(even) {animation:wv 0.5s ease-in-out infinite alt
 
 /* ─── CONTROLS AREA ──────────────────────────────── */
 .controls-area{
-  flex:1;
+  flex-shrink:0;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding-bottom:8px;
-  min-height:0;
+  padding:6px 0 10px;
   gap:4px;
 }
 
@@ -432,23 +444,31 @@ body.thinking .thinking-dots{opacity:1}
       <div class="wbar"></div><div class="wbar"></div><div class="wbar"></div>
     </div>
 
-    <!-- Data panel 2×2 -->
+    <!-- Data panel 3×2 -->
     <div class="data-grid">
       <div class="data-card">
         <div class="card-header"><span class="card-icon">⚙️</span><span class="card-label">系统</span></div>
-        <div class="card-value" id="cardSys">CPU <span class="hi">34%</span> · MEM 61%<br>温度 <span class="lo">48°C</span></div>
+        <div class="card-value" id="cardSys">CPU <span class="hi">48%</span> <span class="pbar">▓▓▓▓</span><span class="pbar-dim">░░░░</span><br>MEM <span class="lo">29%</span> <span class="pbar">▓▓</span><span class="pbar-dim">░░░░░░</span><br>TEMP <span class="hi">39°C</span> · 磁盘 <span class="lo">67%</span><br>↑<span class="ok">1.2</span>MB ↓<span class="dim">0.8</span>MB/s</div>
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">💰</span><span class="card-label">财务</span></div>
-        <div class="card-value" id="cardFin">MRR <span class="hi">¥12,380</span><br>余额 <span class="lo">¥85,200</span></div>
+        <div class="card-value" id="cardFin">MRR <span class="hi">¥12,380</span> <span class="ok">+8.3%</span><br>今日 <span class="lo">¥420</span> · 余额 <span class="hi">¥85,200</span><br>目标 38% <span class="pbar">████</span><span class="pbar-dim">░░░░░░</span></div>
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">☁️</span><span class="card-label">无锡天气</span></div>
-        <div class="card-value" id="cardWx">☁️ <span class="hi">14°C</span> 多云<br>湿度 72%</div>
+        <div class="card-value" id="cardWx">☁️ <span class="hi">14°C</span> 多云<br>湿度 <span class="lo">72%</span> | 风速 3级<br>明天 🌤 <span class="hi">16°C</span> · 后天 🌧 <span class="lo">12°C</span></div>
       </div>
       <div class="data-card">
         <div class="card-header"><span class="card-icon">📋</span><span class="card-label">今日任务</span></div>
-        <div class="card-value" id="cardTask"><span class="hi">3</span> 项待完成<br><span class="lo">0</span> 项已完成</div>
+        <div class="card-value" id="cardTask"><span class="hi">3</span>待/<span class="ok">5</span>今日<br>EP76上传 <span class="ok">✅</span> Pi界面 🔄<br>卜瓜分析 <span class="dim">⏳</span><br>完成率 40% <span class="pbar">████</span><span class="pbar-dim">░░░░░░</span></div>
+      </div>
+      <div class="data-card">
+        <div class="card-header"><span class="card-icon">📺</span><span class="card-label">南荒说</span></div>
+        <div class="card-value" id="cardContent">EP76 <span class="ok">✅</span> 抖音+视频号<br>播放 <span class="dim">--</span> · 粉丝 <span class="dim">--</span></div>
+      </div>
+      <div class="data-card">
+        <div class="card-header"><span class="card-icon">🔔</span><span class="card-label">提醒</span></div>
+        <div class="card-value" id="cardRemind">最近提醒 <span class="dim">无</span><br>下次发布 <span class="lo">EP77</span> <span class="dim">待定</span></div>
       </div>
     </div>
 
@@ -1215,43 +1235,82 @@ async function autoRecord(ms) {
 // ═══════════════════════════════════════════════════
 // Mock defaults (used if API returns empty)
 const MOCK = {
-  sys:    { cpu: 34, mem: 61, temp: 48 },
-  fin:    { mrr: '¥12,380', bal: '¥85,200' },
-  wx:     { temp: 14, desc: '多云', hum: 72 },
-  tasks:  { pending: 3, done: 0 }
+  sys:    { cpu: 48, mem: 29, temp: 39, disk: 67, netUp: '1.2', netDown: '0.8' },
+  fin:    { mrr: '¥12,380', mrrGrowth: '+8.3%', today: '¥420', bal: '¥85,200', goalPct: 38 },
+  wx:     { temp: 14, desc: '多云', hum: 72, wind: '3级', tmrEmoji: '🌤', tmrTemp: 16, d2Emoji: '🌧', d2Temp: 12, d2Desc: '小雨' },
+  tasks:  { pending: 3, total: 5, donePct: 40 }
 };
+
+function pbar(pct, total) {
+  const filled = Math.round(pct / 100 * total);
+  const empty  = total - filled;
+  return '<span class="pbar">' + '▓'.repeat(filled) + '</span><span class="pbar-dim">' + '░'.repeat(empty) + '</span>';
+}
 
 function updateSysCard(data) {
   const el = document.getElementById('cardSys');
   if (!el) return;
-  const cpu  = data?.cpu  ?? MOCK.sys.cpu;
-  const mem  = data?.mem  ?? MOCK.sys.mem;
-  const temp = data?.temp ?? MOCK.sys.temp;
-  el.innerHTML = 'CPU <span class="hi">' + cpu + '%</span> · MEM ' + mem + '%<br>温度 <span class="lo">' + temp + '°C</span>';
+  const cpu     = data?.cpu      ?? MOCK.sys.cpu;
+  const mem     = data?.mem      ?? MOCK.sys.mem;
+  const temp    = data?.temp     ?? MOCK.sys.temp;
+  const disk    = data?.disk     ?? MOCK.sys.disk;
+  const netUp   = data?.netUp    ?? MOCK.sys.netUp;
+  const netDown = data?.netDown  ?? MOCK.sys.netDown;
+  el.innerHTML =
+    'CPU <span class="hi">' + cpu + '%</span> ' + pbar(cpu, 8) + '<br>' +
+    'MEM <span class="lo">' + mem + '%</span> ' + pbar(mem, 8) + '<br>' +
+    'TEMP <span class="hi">' + temp + '°C</span> · 磁盘 <span class="lo">' + disk + '%</span><br>' +
+    '↑<span class="ok">' + netUp + '</span>MB ↓<span class="dim">' + netDown + '</span>MB/s';
 }
 
 function updateFinCard(data) {
   const el = document.getElementById('cardFin');
   if (!el) return;
-  const mrr = data?.mrr ?? MOCK.fin.mrr;
-  const bal = data?.balance ?? MOCK.fin.bal;
-  el.innerHTML = 'MRR <span class="hi">' + mrr + '</span><br>余额 <span class="lo">' + bal + '</span>';
+  const mrr      = data?.mrr        ?? MOCK.fin.mrr;
+  const growth   = data?.mrrGrowth  ?? MOCK.fin.mrrGrowth;
+  const today    = data?.today      ?? MOCK.fin.today;
+  const bal      = data?.balance    ?? MOCK.fin.bal;
+  const goalPct  = data?.goalPct    ?? MOCK.fin.goalPct;
+  el.innerHTML =
+    'MRR <span class="hi">' + mrr + '</span> <span class="ok">' + growth + '</span><br>' +
+    '今日 <span class="lo">' + today + '</span> · 余额 <span class="hi">' + bal + '</span><br>' +
+    '目标 ' + goalPct + '% ' + pbar(goalPct, 10);
 }
 
 function updateWxCard(w) {
   const el = document.getElementById('cardWx');
   if (!el) return;
   if (!w || w.error) return;
-  const wco = { 0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',61:'🌦️',63:'🌧️',80:'🌦️',95:'⛈️' };
-  const emoji = wco[w.weatherCode] || '🌤️';
-  el.innerHTML = emoji + ' <span class="hi">' + (w.temp||MOCK.wx.temp) + '°C</span> ' + (w.desc||MOCK.wx.desc) + '<br>湿度 ' + (w.humidity||MOCK.wx.hum) + '%';
+  const wco = { 0:'☀️',1:'🌤',2:'⛅',3:'☁️',45:'🌫️',51:'🌦️',61:'🌦️',63:'🌧️',80:'🌦️',95:'⛈️' };
+  const emoji   = wco[w.weatherCode] || '☁️';
+  const temp    = w.temp     ?? MOCK.wx.temp;
+  const desc    = w.desc     ?? MOCK.wx.desc;
+  const hum     = w.humidity ?? MOCK.wx.hum;
+  const wind    = w.wind     ?? MOCK.wx.wind;
+  const tmrE    = w.tmrEmoji ?? MOCK.wx.tmrEmoji;
+  const tmrT    = w.tmrTemp  ?? MOCK.wx.tmrTemp;
+  const d2E     = w.d2Emoji  ?? MOCK.wx.d2Emoji;
+  const d2T     = w.d2Temp   ?? MOCK.wx.d2Temp;
+  const d2D     = w.d2Desc   ?? MOCK.wx.d2Desc;
+  el.innerHTML =
+    emoji + ' <span class="hi">' + temp + '°C</span> ' + desc + '<br>' +
+    '湿度 <span class="lo">' + hum + '%</span> | 风速 ' + wind + '<br>' +
+    '明天 ' + tmrE + ' <span class="hi">' + tmrT + '°C</span> · 后天 ' + d2E + ' <span class="lo">' + d2T + '°C</span> ' + d2D;
 }
 
 function updateTaskCard(tasks) {
   const el = document.getElementById('cardTask');
   if (!el) return;
-  const pending = Array.isArray(tasks) ? tasks.length : MOCK.tasks.pending;
-  el.innerHTML = '<span class="hi">' + pending + '</span> 项待完成<br><span class="lo">0</span> 项已完成';
+  const pending = Array.isArray(tasks) ? tasks.filter(t => !t.done).length : MOCK.tasks.pending;
+  const total   = Array.isArray(tasks) ? tasks.length : MOCK.tasks.total;
+  const donePct = Array.isArray(tasks) && tasks.length > 0
+    ? Math.round(tasks.filter(t => t.done).length / tasks.length * 100)
+    : MOCK.tasks.donePct;
+  el.innerHTML =
+    '<span class="hi">' + pending + '</span>待/<span class="ok">' + total + '</span>今日<br>' +
+    'EP76上传 <span class="ok">✅</span> Pi界面 🔄<br>' +
+    '卜瓜分析 <span class="dim">⏳</span><br>' +
+    '完成率 ' + donePct + '% ' + pbar(donePct, 10);
 }
 
 async function fetchSysStats() {
